@@ -1,0 +1,506 @@
+/* ============================================
+   CSS Variables & Design Tokens
+   ============================================ */
+:root {
+    /* Colors */
+    --bg-primary: #0a0a0f;
+    --bg-secondary: #12121a;
+    --bg-tertiary: #1a1a25;
+    --surface: rgba(255, 255, 255, 0.03);
+    --surface-hover: rgba(255, 255, 255, 0.08);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.15);
+
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-tertiary: rgba(255, 255, 255, 0.5);
+    --text-muted: rgba(255, 255, 255, 0.35);
+
+    --accent-primary: #6366f1;
+    --accent-secondary: #818cf8;
+    --accent-glow: rgba(99, 102, 241, 0.4);
+
+    --key-bg: linear-gradient(145deg, #1e1e2a, #151520);
+    --key-bg-hover: linear-gradient(145deg, #2a2a3a, #1a1a28);
+    --key-shadow: 0 4px 6px rgba(0, 0, 0, 0.4),
+        0 1px 3px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --key-shadow-hover: 0 8px 16px rgba(99, 102, 241, 0.2),
+        0 4px 8px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+    /* Typography */
+    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+    /* Sizing */
+    --key-size: 48px;
+    --key-gap: 4px;
+    --key-radius: 8px;
+    --section-gap: 20px;
+
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-normal: 250ms ease;
+    --transition-smooth: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: var(--font-primary);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: auto;
+    background-image:
+        radial-gradient(ellipse at top, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at bottom right, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+}
+
+.container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.header {
+    text-align: center;
+}
+
+.back-link {
+    display: inline-block;
+    color: var(--accent-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+    transition: var(--transition-fast);
+}
+
+.back-link:hover {
+    color: var(--accent-primary);
+}
+
+.header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent-secondary);
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: 400;
+}
+
+/* ============================================
+   Layout Switcher
+   ============================================ */
+.layout-switcher {
+    display: flex;
+    gap: 8px;
+    padding: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+
+.layout-btn {
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.layout-btn:hover {
+    color: var(--text-primary);
+    background: var(--surface-hover);
+}
+
+.layout-btn.active {
+    background: var(--accent-primary);
+    color: var(--text-primary);
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+/* ============================================
+   Info Panel
+   ============================================ */
+.info-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 32px;
+    backdrop-filter: blur(20px);
+    min-width: 500px;
+    transition: var(--transition-smooth);
+}
+
+.info-panel.active {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 40px var(--accent-glow);
+}
+
+.info-header {
+    text-align: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.info-key-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+.info-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent-secondary);
+}
+
+/* ============================================
+   Keyboard Wrapper & Sections
+   ============================================ */
+.keyboard-wrapper {
+    padding: 24px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    display: inline-block;
+    /* Fit content */
+}
+
+.keyboard {
+    display: flex;
+    gap: 20px;
+    /* Gap between Main, Nav, and Numpad blocks */
+    align-items: flex-start;
+}
+
+.keyboard-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--key-gap);
+}
+
+/* ============================================
+   Main & Nav Rows
+   ============================================ */
+.keyboard-row {
+    display: flex;
+    gap: var(--key-gap);
+    align-items: center;
+}
+
+.keyboard-section {
+    display: flex;
+    gap: var(--key-gap);
+}
+
+.section-gap {
+    width: var(--section-gap);
+}
+
+/* ============================================
+   Numpad Grid
+   ============================================ */
+.numpad-grid {
+    display: grid;
+    grid-template-columns: repeat(4, var(--key-size));
+    grid-template-rows: repeat(5, var(--key-size));
+    gap: var(--key-gap);
+}
+
+/* Numpad Key Spans */
+.key-numpad-0 {
+    grid-column: span 2;
+    width: auto !important;
+    /* Override fixed width */
+}
+
+.key-numpad-plus {
+    grid-row: span 2;
+    height: auto !important;
+    /* Override fixed height */
+}
+
+.key-numpad-enter {
+    grid-row: span 2;
+    height: auto !important;
+    /* Override fixed height */
+}
+
+/* ============================================
+   Key Styles
+   ============================================ */
+.key {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--key-size);
+    /* Default width */
+    height: var(--key-size);
+    padding: 4px 8px;
+    background: var(--key-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--key-radius);
+    box-shadow: var(--key-shadow);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+}
+
+.key::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.03), transparent);
+    border-radius: var(--key-radius) var(--key-radius) 0 0;
+    pointer-events: none;
+}
+
+.key:hover {
+    background: var(--key-bg-hover);
+    border-color: var(--accent-primary);
+    box-shadow: var(--key-shadow-hover);
+    transform: translateY(-2px);
+}
+
+.key:hover .key-label {
+    color: var(--text-primary);
+}
+
+.key.active {
+    background: linear-gradient(145deg, var(--accent-primary), #4f46e5);
+    border-color: var(--accent-secondary);
+    box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.key-label {
+    font-family: var(--font-primary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.2;
+    transition: var(--transition-fast);
+    z-index: 1;
+}
+
+.key-label-small {
+    font-size: 0.625rem;
+}
+
+.key-label-icon {
+    font-size: 1rem;
+}
+
+.win-logo-svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+    display: block;
+}
+
+/* Key size variations */
+.key-1 {
+    min-width: var(--key-size);
+}
+
+.key-1-25 {
+    min-width: calc(var(--key-size) * 1.25 + var(--key-gap) * 0.25);
+}
+
+.key-1-5 {
+    min-width: calc(var(--key-size) * 1.5 + var(--key-gap) * 0.5);
+}
+
+.key-1-75 {
+    min-width: calc(var(--key-size) * 1.75 + var(--key-gap) * 0.75);
+}
+
+.key-2 {
+    min-width: calc(var(--key-size) * 2 + var(--key-gap));
+}
+
+.key-2-25 {
+    min-width: calc(var(--key-size) * 2.25 + var(--key-gap) * 1.25);
+}
+
+.key-2-75 {
+    min-width: calc(var(--key-size) * 2.75 + var(--key-gap) * 1.75);
+}
+
+.key-6-25 {
+    min-width: calc(var(--key-size) * 6.25 + var(--key-gap) * 5.25);
+}
+
+.key-7-5 {
+    min-width: calc(var(--key-size) * 7.5 + var(--key-gap) * 6.5);
+}
+
+/* Special key sizes for different layouts */
+.key-iso-enter {
+    min-width: calc(var(--key-size) * 1.25 + var(--key-gap) * 0.25);
+    height: calc(var(--key-size) * 2 + var(--key-gap));
+    border-radius: var(--key-radius);
+}
+
+.key-numpad-0 {
+    min-width: calc(var(--key-size) * 2 + var(--key-gap));
+}
+
+.key-numpad-enter,
+.key-numpad-plus {
+    height: calc(var(--key-size) * 2 + var(--key-gap));
+}
+
+/* Modifier key styling */
+.key-modifier {
+    background: linear-gradient(145deg, #1a1a28, #121220);
+}
+
+.key-modifier:hover {
+    background: linear-gradient(145deg, #252535, #1a1a28);
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+.footer {
+    text-align: center;
+    padding-top: 20px;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.footer code {
+    font-family: var(--font-mono);
+    color: var(--text-tertiary);
+    background: var(--surface);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.source-links {
+    margin-top: 8px;
+}
+
+.source-links a {
+    color: var(--accent-secondary);
+    text-decoration: none;
+    transition: var(--transition-fast);
+}
+
+.source-links a:hover {
+    color: var(--accent-primary);
+    text-decoration: underline;
+}
+
+.separator {
+    margin: 0 12px;
+    color: var(--text-muted);
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 1400px) {
+    :root {
+        --key-size: 42px;
+    }
+}
+
+@media (max-width: 1200px) {
+    :root {
+        --key-size: 36px;
+    }
+
+    .info-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .info-panel {
+        min-width: 350px;
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --key-size: 30px;
+        --key-gap: 3px;
+    }
+
+    .header h1 {
+        font-size: 1.5rem;
+    }
+
+    .container {
+        padding: 20px 10px;
+    }
+}

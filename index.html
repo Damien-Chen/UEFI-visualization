@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UEFI Developer Tools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0f0f23 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #4fc3f7 0%, #7c4dff 50%, #ff4081 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #9e9e9e;
+            font-weight: 300;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .tool-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 40px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .tool-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(79, 195, 247, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .tool-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #4fc3f7 0%, #7c4dff 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            font-size: 2.5rem;
+        }
+
+        .tool-card:nth-child(2) .tool-icon {
+            background: linear-gradient(135deg, #7c4dff 0%, #ff4081 100%);
+        }
+
+        .tool-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #ffffff;
+        }
+
+        .tool-description {
+            font-size: 1rem;
+            color: #9e9e9e;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .tool-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: rgba(79, 195, 247, 0.1);
+            color: #4fc3f7;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .tool-card:nth-child(2) .tag {
+            background: rgba(124, 77, 255, 0.1);
+            color: #b388ff;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 80px;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        footer p {
+            color: #6e6e6e;
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: #4fc3f7;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .nav-hint {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #4fc3f7;
+            font-size: 0.9rem;
+            margin-top: 16px;
+        }
+
+        .nav-hint svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tool-card {
+                padding: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>UEFI Developer Tools</h1>
+            <p class="subtitle">Interactive visualization tools for UEFI/EDK2 development</p>
+        </header>
+
+        <div class="tools-grid">
+            <a href="memory-viz/index.html" class="tool-card">
+                <div class="tool-icon">📊</div>
+                <h2 class="tool-title">Memory Management Visualizer</h2>
+                <p class="tool-description">
+                    Interactive visualization of UEFI EDK2 memory management concepts including 
+                    data structures, memory layout, allocation and deallocation processes.
+                </p>
+                <div class="tool-tags">
+                    <span class="tag">LIST_ENTRY</span>
+                    <span class="tag">Memory Map</span>
+                    <span class="tag">AllocatePages</span>
+                    <span class="tag">FreePages</span>
+                </div>
+                <div class="nav-hint">
+                    <span>Open Tool</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </div>
+            </a>
+
+            <a href="hid-viewer/index.html" class="tool-card">
+                <div class="tool-icon">⌨️</div>
+                <h2 class="tool-title">USB HID Key Code Viewer</h2>
+                <p class="tool-description">
+                    Interactive keyboard viewer showing USB HID Usage IDs and their corresponding 
+                    UEFI EDK2 EFI key codes. Supports US ANSI, European ISO, and Japanese JIS layouts.
+                </p>
+                <div class="tool-tags">
+                    <span class="tag">HID Usage ID</span>
+                    <span class="tag">EFI Key Code</span>
+                    <span class="tag">Keyboard Layouts</span>
+                </div>
+                <div class="nav-hint">
+                    <span>Open Tool</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </div>
+            </a>
+        </div>
+
+        <footer>
+            <p>
+                <a href="https://github.com/tianocore/edk2" target="_blank">EDK2 Source</a> • 
+                <a href="https://uefi.org/specifications" target="_blank">UEFI Specifications</a> • 
+                <a href="https://github.com/Damien-Chen" target="_blank">GitHub</a>
+            </p>
+            <p style="margin-top: 12px;">&copy; 2025 Damien Chen. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UEFI EDK2 記憶體管理視覺化</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a href="../index.html" class="home-link">← Back</a>
+            <span>UEFI EDK2 Memory Management</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#data-structures" class="nav-link active" data-i18n="nav.dataStructures">資料結構</a></li>
+            <li><a href="#memory-layout" class="nav-link" data-i18n="nav.memoryLayout">記憶體配置圖</a></li>
+            <li><a href="#allocation" class="nav-link" data-i18n="nav.allocation">記憶體配置</a></li>
+            <li><a href="#deallocation" class="nav-link" data-i18n="nav.deallocation">記憶體釋放</a></li>
+        </ul>
+        <div class="lang-switcher">
+            <button class="lang-btn" data-lang="zh-TW" title="繁體中文">中文</button>
+            <button class="lang-btn" data-lang="en" title="English">EN</button>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- Section 1: Data Structures -->
+        <section id="data-structures" class="section">
+            <h1 data-i18n="section1.title">1. 基礎資料結構</h1>
+            
+            <!-- LIST_ENTRY -->
+            <div class="subsection">
+                <h2 data-i18n="section1.1.title">1.1 LIST_ENTRY 雙向鏈結串列</h2>
+                <p class="description" data-i18n="section1.1.desc">
+                    <code>LIST_ENTRY</code> 是 EDK2 中最基礎的資料結構，用於實現雙向鏈結串列。
+                    它被嵌入到其他結構體中，用於將多個結構體串連起來。
+                </p>
+                
+                <div class="code-block">
+                    <pre>
+typedef struct _LIST_ENTRY {
+    struct _LIST_ENTRY  *ForwardLink;  // 指向下一個節點
+    struct _LIST_ENTRY  *BackLink;     // 指向前一個節點
+} LIST_ENTRY;</pre>
+                </div>
+
+                <div class="diagram-container">
+                    <h3 data-i18n="section1.1.diagram">LIST_ENTRY 結構圖解</h3>
+                    <div id="list-entry-diagram" class="diagram">
+                        <svg viewBox="0 0 800 200" class="list-entry-svg">
+                            <!-- Node 1 -->
+                            <g class="node" id="node1">
+                                <rect x="50" y="60" width="180" height="80" rx="8" class="node-box"/>
+                                <text x="140" y="85" class="node-title">LIST_ENTRY</text>
+                                <line x1="50" y1="95" x2="230" y2="95" class="divider"/>
+                                <text x="60" y="115" class="node-field">ForwardLink</text>
+                                <text x="60" y="135" class="node-field">BackLink</text>
+                                <circle cx="200" cy="110" r="6" class="pointer-dot forward"/>
+                                <circle cx="200" cy="130" r="6" class="pointer-dot back"/>
+                            </g>
+                            
+                            <!-- Node 2 -->
+                            <g class="node" id="node2">
+                                <rect x="310" y="60" width="180" height="80" rx="8" class="node-box"/>
+                                <text x="400" y="85" class="node-title">LIST_ENTRY</text>
+                                <line x1="310" y1="95" x2="490" y2="95" class="divider"/>
+                                <text x="320" y="115" class="node-field">ForwardLink</text>
+                                <text x="320" y="135" class="node-field">BackLink</text>
+                                <circle cx="460" cy="110" r="6" class="pointer-dot forward"/>
+                                <circle cx="460" cy="130" r="6" class="pointer-dot back"/>
+                            </g>
+                            
+                            <!-- Node 3 -->
+                            <g class="node" id="node3">
+                                <rect x="570" y="60" width="180" height="80" rx="8" class="node-box"/>
+                                <text x="660" y="85" class="node-title">LIST_ENTRY</text>
+                                <line x1="570" y1="95" x2="750" y2="95" class="divider"/>
+                                <text x="580" y="115" class="node-field">ForwardLink</text>
+                                <text x="580" y="135" class="node-field">BackLink</text>
+                                <circle cx="720" cy="110" r="6" class="pointer-dot forward"/>
+                                <circle cx="720" cy="130" r="6" class="pointer-dot back"/>
+                            </g>
+                            
+                            <!-- Forward Links (top arrows) -->
+                            <path d="M 206 110 Q 260 70 304 110" class="arrow forward-arrow" marker-end="url(#arrowhead-forward)"/>
+                            <path d="M 466 110 Q 520 70 564 110" class="arrow forward-arrow" marker-end="url(#arrowhead-forward)"/>
+                            
+                            <!-- Back Links (bottom arrows) -->
+                            <path d="M 304 130 Q 260 170 206 130" class="arrow back-arrow" marker-end="url(#arrowhead-back)"/>
+                            <path d="M 564 130 Q 520 170 466 130" class="arrow back-arrow" marker-end="url(#arrowhead-back)"/>
+                            
+                            <!-- Arrow markers -->
+                            <defs>
+                                <marker id="arrowhead-forward" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                    <polygon points="0 0, 10 3.5, 0 7" fill="#4CAF50"/>
+                                </marker>
+                                <marker id="arrowhead-back" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                    <polygon points="0 0, 10 3.5, 0 7" fill="#2196F3"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div class="legend">
+                        <span class="legend-item"><span class="dot forward"></span> ForwardLink</span>
+                        <span class="legend-item"><span class="dot back"></span> BackLink</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MEMORY_MAP_ENTRY -->
+            <div class="subsection">
+                <h2 data-i18n="section1.2.title">1.2 MEMORY_MAP_ENTRY 記憶體描述結構</h2>
+                <p class="description" data-i18n="section1.2.desc">
+                    <code>MEMORY_MAP_ENTRY</code> 描述一塊連續的記憶體區域，包含其類型、起始位址、頁數等資訊。
+                    多個 MEMORY_MAP_ENTRY 透過 LIST_ENTRY 串連成記憶體映射表。
+                </p>
+                
+                <div class="code-block">
+                    <pre>
+typedef struct {
+    UINT32          Signature;        // 簽名: 'mmap'
+    LIST_ENTRY      Link;             // 串連用的雙向鏈結
+    EFI_MEMORY_TYPE Type;             // 記憶體類型
+    EFI_PHYSICAL_ADDRESS Start;       // 起始物理位址
+    EFI_PHYSICAL_ADDRESS End;         // 結束物理位址
+    UINT64          Attribute;        // 記憶體屬性
+} MEMORY_MAP_ENTRY;</pre>
+                </div>
+
+                <div class="diagram-container">
+                    <h3 data-i18n="section1.2.diagram">MEMORY_MAP_ENTRY 結構與串連</h3>
+                    <div id="memory-map-diagram" class="diagram">
+                        <svg viewBox="0 0 900 350" class="memory-map-svg">
+                            <!-- Memory Map Entry 1 -->
+                            <g class="memory-entry" id="entry1">
+                                <rect x="30" y="50" width="250" height="200" rx="10" class="entry-box type-conventional"/>
+                                <text x="155" y="80" class="entry-title">MEMORY_MAP_ENTRY</text>
+                                <line x1="30" y1="90" x2="280" y2="90" class="divider"/>
+                                
+                                <text x="45" y="115" class="field-name">Signature:</text>
+                                <text x="150" y="115" class="field-value">'mmap'</text>
+                                
+                                <rect x="45" y="125" width="220" height="35" rx="5" class="list-entry-embed"/>
+                                <text x="155" y="148" class="embed-title">LIST_ENTRY Link</text>
+                                
+                                <text x="45" y="180" class="field-name">Type:</text>
+                                <text x="150" y="180" class="field-value type-conv">EfiConventionalMemory</text>
+                                
+                                <text x="45" y="200" class="field-name">Start:</text>
+                                <text x="150" y="200" class="field-value">0x00100000</text>
+                                
+                                <text x="45" y="220" class="field-name">End:</text>
+                                <text x="150" y="220" class="field-value">0x00FFFFFF</text>
+                                
+                                <text x="45" y="240" class="field-name">Attribute:</text>
+                                <text x="150" y="240" class="field-value">WB, UC</text>
+                            </g>
+
+                            <!-- Memory Map Entry 2 -->
+                            <g class="memory-entry" id="entry2">
+                                <rect x="325" y="50" width="250" height="200" rx="10" class="entry-box type-boot"/>
+                                <text x="450" y="80" class="entry-title">MEMORY_MAP_ENTRY</text>
+                                <line x1="325" y1="90" x2="575" y2="90" class="divider"/>
+                                
+                                <text x="340" y="115" class="field-name">Signature:</text>
+                                <text x="445" y="115" class="field-value">'mmap'</text>
+                                
+                                <rect x="340" y="125" width="220" height="35" rx="5" class="list-entry-embed"/>
+                                <text x="450" y="148" class="embed-title">LIST_ENTRY Link</text>
+                                
+                                <text x="340" y="180" class="field-name">Type:</text>
+                                <text x="445" y="180" class="field-value type-boot">EfiBootServicesData</text>
+                                
+                                <text x="340" y="200" class="field-name">Start:</text>
+                                <text x="445" y="200" class="field-value">0x01000000</text>
+                                
+                                <text x="340" y="220" class="field-name">End:</text>
+                                <text x="445" y="220" class="field-value">0x01FFFFFF</text>
+                                
+                                <text x="340" y="240" class="field-name">Attribute:</text>
+                                <text x="445" y="240" class="field-value">WB</text>
+                            </g>
+
+                            <!-- Memory Map Entry 3 -->
+                            <g class="memory-entry" id="entry3">
+                                <rect x="620" y="50" width="250" height="200" rx="10" class="entry-box type-runtime"/>
+                                <text x="745" y="80" class="entry-title">MEMORY_MAP_ENTRY</text>
+                                <line x1="620" y1="90" x2="870" y2="90" class="divider"/>
+                                
+                                <text x="635" y="115" class="field-name">Signature:</text>
+                                <text x="740" y="115" class="field-value">'mmap'</text>
+                                
+                                <rect x="635" y="125" width="220" height="35" rx="5" class="list-entry-embed"/>
+                                <text x="745" y="148" class="embed-title">LIST_ENTRY Link</text>
+                                
+                                <text x="635" y="180" class="field-name">Type:</text>
+                                <text x="740" y="180" class="field-value type-runtime">EfiRuntimeServicesData</text>
+                                
+                                <text x="635" y="200" class="field-name">Start:</text>
+                                <text x="740" y="200" class="field-value">0x02000000</text>
+                                
+                                <text x="635" y="220" class="field-name">End:</text>
+                                <text x="740" y="220" class="field-value">0x020FFFFF</text>
+                                
+                                <text x="635" y="240" class="field-name">Attribute:</text>
+                                <text x="740" y="240" class="field-value">WB, RT</text>
+                            </g>
+
+                            <!-- Connecting arrows through LIST_ENTRY -->
+                            <path d="M 265 142 Q 295 120 320 142" class="arrow forward-arrow" marker-end="url(#arrowhead-forward)"/>
+                            <path d="M 560 142 Q 590 120 615 142" class="arrow forward-arrow" marker-end="url(#arrowhead-forward)"/>
+                            
+                            <path d="M 320 148 Q 295 175 265 148" class="arrow back-arrow" marker-end="url(#arrowhead-back)"/>
+                            <path d="M 615 148 Q 590 175 560 148" class="arrow back-arrow" marker-end="url(#arrowhead-back)"/>
+
+                            <!-- Head pointer -->
+                            <text x="155" y="300" class="head-label">gMemoryMap (List Head)</text>
+                            <path d="M 155 285 L 155 255" class="arrow head-arrow" marker-end="url(#arrowhead-head)"/>
+                            
+                            <defs>
+                                <marker id="arrowhead-head" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                    <polygon points="0 0, 10 3.5, 0 7" fill="#FF5722"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div class="legend">
+                        <span class="legend-item"><span class="color-box conv"></span> Conventional Memory</span>
+                        <span class="legend-item"><span class="color-box boot"></span> Boot Services</span>
+                        <span class="legend-item"><span class="color-box runtime"></span> Runtime Services</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Memory Types -->
+            <div class="subsection">
+                <h2 data-i18n="section1.3.title">1.3 EFI_MEMORY_TYPE 記憶體類型</h2>
+                <div class="memory-types-grid">
+                    <div class="type-card reserved">
+                        <h4>EfiReservedMemoryType</h4>
+                        <p data-i18n="memType.reserved">保留記憶體，不可使用</p>
+                    </div>
+                    <div class="type-card loader-code">
+                        <h4>EfiLoaderCode</h4>
+                        <p data-i18n="memType.loaderCode">OS Loader 程式碼</p>
+                    </div>
+                    <div class="type-card loader-data">
+                        <h4>EfiLoaderData</h4>
+                        <p data-i18n="memType.loaderData">OS Loader 資料</p>
+                    </div>
+                    <div class="type-card bs-code">
+                        <h4>EfiBootServicesCode</h4>
+                        <p data-i18n="memType.bsCode">Boot Services 程式碼</p>
+                    </div>
+                    <div class="type-card bs-data">
+                        <h4>EfiBootServicesData</h4>
+                        <p data-i18n="memType.bsData">Boot Services 資料</p>
+                    </div>
+                    <div class="type-card rt-code">
+                        <h4>EfiRuntimeServicesCode</h4>
+                        <p data-i18n="memType.rtCode">Runtime Services 程式碼</p>
+                    </div>
+                    <div class="type-card rt-data">
+                        <h4>EfiRuntimeServicesData</h4>
+                        <p data-i18n="memType.rtData">Runtime Services 資料</p>
+                    </div>
+                    <div class="type-card conventional">
+                        <h4>EfiConventionalMemory</h4>
+                        <p data-i18n="memType.conventional">可用的空閒記憶體</p>
+                    </div>
+                    <div class="type-card acpi-reclaim">
+                        <h4>EfiACPIReclaimMemory</h4>
+                        <p data-i18n="memType.acpiReclaim">ACPI 可回收記憶體</p>
+                    </div>
+                    <div class="type-card acpi-nvs">
+                        <h4>EfiACPIMemoryNVS</h4>
+                        <p data-i18n="memType.acpiNvs">ACPI NVS 記憶體</p>
+                    </div>
+                    <div class="type-card mmio">
+                        <h4>EfiMemoryMappedIO</h4>
+                        <p data-i18n="memType.mmio">記憶體映射 I/O</p>
+                    </div>
+                    <div class="type-card persistent">
+                        <h4>EfiPersistentMemory</h4>
+                        <p data-i18n="memType.persistent">持久性記憶體</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Memory Layout -->
+        <section id="memory-layout" class="section">
+            <h1 data-i18n="section2.title">2. 記憶體初始化配置圖</h1>
+            
+            <div class="subsection">
+                <h2 data-i18n="section2.1.title">2.1 系統記憶體整體佈局</h2>
+                <p class="description" data-i18n="section2.1.desc">
+                    在 UEFI 系統啟動過程中，記憶體會被劃分為不同的區域。以下是一個典型的記憶體佈局範例：
+                </p>
+                
+                <div class="diagram-container">
+                    <div id="memory-layout-diagram" class="memory-layout">
+                        <div class="address-column">
+                            <span class="address">0xFFFFFFFF</span>
+                            <span class="address">0xFED00000</span>
+                            <span class="address">0xA0000000</span>
+                            <span class="address">0x80000000</span>
+                            <span class="address">0x10000000</span>
+                            <span class="address">0x01000000</span>
+                            <span class="address">0x00100000</span>
+                            <span class="address">0x000A0000</span>
+                            <span class="address">0x00000000</span>
+                        </div>
+                        <div class="memory-blocks">
+                            <div class="mem-block mmio-block">
+                                <span class="block-name">MMIO Region</span>
+                                <span class="block-desc">PCIe, LAPIC, IO-APIC</span>
+                            </div>
+                            <div class="mem-block smram-block">
+                                <span class="block-name">SMRAM (SMM)</span>
+                                <span class="block-desc">System Management Mode</span>
+                                <span class="block-size">~8MB - 32MB</span>
+                            </div>
+                            <div class="mem-block pci-block">
+                                <span class="block-name">PCI Memory Hole</span>
+                                <span class="block-desc">PCI 設備記憶體映射</span>
+                            </div>
+                            <div class="mem-block dxe-block">
+                                <span class="block-name">DXE Memory Pool</span>
+                                <span class="block-desc">DXE 驅動程式、Protocols</span>
+                                <span class="block-size">主要可用記憶體區域</span>
+                            </div>
+                            <div class="mem-block runtime-block">
+                                <span class="block-name">Runtime Services</span>
+                                <span class="block-desc">Runtime Code & Data</span>
+                            </div>
+                            <div class="mem-block boot-block">
+                                <span class="block-name">Boot Services</span>
+                                <span class="block-desc">Boot Code & Data</span>
+                            </div>
+                            <div class="mem-block legacy-block">
+                                <span class="block-name">Legacy Region</span>
+                                <span class="block-desc">VGA Buffer, Option ROMs</span>
+                            </div>
+                            <div class="mem-block low-block">
+                                <span class="block-name">Low Memory</span>
+                                <span class="block-desc">IVT, BDA, EBDA</span>
+                            </div>
+                        </div>
+                        <div class="info-column">
+                            <div class="info-item">
+                                <span class="info-label">4GB</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">~4GB</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">TSEG</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">2GB-4GB</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">256MB-2GB</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">16MB</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">1MB-16MB</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">640KB</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">0KB</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h2 data-i18n="section2.2.title">2.2 記憶體映射表初始狀態</h2>
+                <p class="description" data-i18n="section2.2.desc">
+                    系統啟動後，記憶體管理器會建立一個 Memory Map 鏈結串列來追蹤所有記憶體區域的狀態：
+                </p>
+                
+                <div class="diagram-container">
+                    <div id="initial-map-diagram" class="initial-map">
+                        <svg viewBox="0 0 1000 400" class="initial-map-svg">
+                            <!-- List Head -->
+                            <g class="list-head">
+                                <rect x="20" y="170" width="120" height="60" rx="8" class="head-box"/>
+                                <text x="80" y="195" class="head-title">gMemoryMap</text>
+                                <text x="80" y="215" class="head-subtitle">(List Head)</text>
+                            </g>
+
+                            <!-- Entry 1: Low Memory -->
+                            <g class="map-entry" transform="translate(180, 30)">
+                                <rect x="0" y="0" width="180" height="100" rx="8" class="entry-box reserved-entry"/>
+                                <text x="90" y="25" class="entry-type">Reserved</text>
+                                <line x1="0" y1="35" x2="180" y2="35" class="divider"/>
+                                <text x="10" y="55" class="entry-field">Start: 0x00000000</text>
+                                <text x="10" y="75" class="entry-field">End: 0x0009FFFF</text>
+                                <text x="10" y="95" class="entry-field">Pages: 160</text>
+                            </g>
+
+                            <!-- Entry 2: Legacy -->
+                            <g class="map-entry" transform="translate(180, 150)">
+                                <rect x="0" y="0" width="180" height="100" rx="8" class="entry-box mmio-entry"/>
+                                <text x="90" y="25" class="entry-type">MMIO</text>
+                                <line x1="0" y1="35" x2="180" y2="35" class="divider"/>
+                                <text x="10" y="55" class="entry-field">Start: 0x000A0000</text>
+                                <text x="10" y="75" class="entry-field">End: 0x000FFFFF</text>
+                                <text x="10" y="95" class="entry-field">Pages: 96</text>
+                            </g>
+
+                            <!-- Entry 3: Conventional -->
+                            <g class="map-entry" transform="translate(180, 270)">
+                                <rect x="0" y="0" width="180" height="100" rx="8" class="entry-box conventional-entry"/>
+                                <text x="90" y="25" class="entry-type">Conventional</text>
+                                <line x1="0" y1="35" x2="180" y2="35" class="divider"/>
+                                <text x="10" y="55" class="entry-field">Start: 0x00100000</text>
+                                <text x="10" y="75" class="entry-field">End: 0x0FFFFFFF</text>
+                                <text x="10" y="95" class="entry-field">Pages: 65280</text>
+                            </g>
+
+                            <!-- Entry 4: Runtime -->
+                            <g class="map-entry" transform="translate(420, 90)">
+                                <rect x="0" y="0" width="180" height="100" rx="8" class="entry-box runtime-entry"/>
+                                <text x="90" y="25" class="entry-type">RuntimeServices</text>
+                                <line x1="0" y1="35" x2="180" y2="35" class="divider"/>
+                                <text x="10" y="55" class="entry-field">Start: 0x10000000</text>
+                                <text x="10" y="75" class="entry-field">End: 0x100FFFFF</text>
+                                <text x="10" y="95" class="entry-field">Pages: 256</text>
+                            </g>
+
+                            <!-- Entry 5: DXE Pool -->
+                            <g class="map-entry" transform="translate(420, 210)">
+                                <rect x="0" y="0" width="180" height="100" rx="8" class="entry-box conventional-entry"/>
+                                <text x="90" y="25" class="entry-type">Conventional</text>
+                                <line x1="0" y1="35" x2="180" y2="35" class="divider"/>
+                                <text x="10" y="55" class="entry-field">Start: 0x10100000</text>
+                                <text x="10" y="75" class="entry-field">End: 0x7FFFFFFF</text>
+                                <text x="10" y="95" class="entry-field">Pages: 458496</text>
+                            </g>
+
+                            <!-- Entry 6: SMRAM -->
+                            <g class="map-entry" transform="translate(660, 90)">
+                                <rect x="0" y="0" width="180" height="100" rx="8" class="entry-box smram-entry"/>
+                                <text x="90" y="25" class="entry-type">Reserved (SMRAM)</text>
+                                <line x1="0" y1="35" x2="180" y2="35" class="divider"/>
+                                <text x="10" y="55" class="entry-field">Start: 0xA0000000</text>
+                                <text x="10" y="75" class="entry-field">End: 0xA1FFFFFF</text>
+                                <text x="10" y="95" class="entry-field">Pages: 8192</text>
+                            </g>
+
+                            <!-- Entry 7: MMIO High -->
+                            <g class="map-entry" transform="translate(660, 210)">
+                                <rect x="0" y="0" width="180" height="100" rx="8" class="entry-box mmio-entry"/>
+                                <text x="90" y="25" class="entry-type">MMIO</text>
+                                <line x1="0" y1="35" x2="180" y2="35" class="divider"/>
+                                <text x="10" y="55" class="entry-field">Start: 0xFED00000</text>
+                                <text x="10" y="75" class="entry-field">End: 0xFFFFFFFF</text>
+                                <text x="10" y="95" class="entry-field">Pages: 4864</text>
+                            </g>
+
+                            <!-- Connecting Lines -->
+                            <path d="M 140 200 L 180 80" class="connect-line"/>
+                            <path d="M 140 200 L 180 200" class="connect-line"/>
+                            <path d="M 140 200 L 180 320" class="connect-line"/>
+                            
+                            <path d="M 360 80 L 420 140" class="connect-line"/>
+                            <path d="M 360 200 L 420 200" class="connect-line"/>
+                            <path d="M 360 320 L 420 260" class="connect-line"/>
+                            
+                            <path d="M 600 140 L 660 140" class="connect-line"/>
+                            <path d="M 600 260 L 660 260" class="connect-line"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Memory Allocation -->
+        <section id="allocation" class="section">
+            <h1 data-i18n="section3.title">3. 記憶體配置流程</h1>
+            
+            <div class="subsection">
+                <h2 data-i18n="section3.1.title">3.1 AllocatePages 配置流程</h2>
+                <p class="description" data-i18n="section3.1.desc">
+                    當呼叫 <code>gBS->AllocatePages()</code> 時，記憶體管理器會執行以下步驟來找到適合的記憶體區塊：
+                </p>
+
+                <div class="step-controls">
+                    <button id="alloc-prev" class="step-btn" disabled data-i18n="btn.prev">← 上一步</button>
+                    <span id="alloc-step-indicator" class="step-indicator">步驟 1 / 7</span>
+                    <button id="alloc-next" class="step-btn" data-i18n="btn.next">下一步 →</button>
+                    <button id="alloc-reset" class="step-btn reset-btn" data-i18n="btn.reset">重置</button>
+                </div>
+
+                <div id="allocation-viz" class="allocation-container">
+                    <!-- Step descriptions -->
+                    <div id="alloc-description" class="step-description">
+                        <h3>步驟 1：接收配置請求</h3>
+                        <p>應用程式呼叫 <code>AllocatePages(AllocateAnyPages, EfiBootServicesData, 4, &Address)</code></p>
+                        <p>請求配置 <strong>4 頁 (16KB)</strong> 的 Boot Services Data 記憶體</p>
+                    </div>
+
+                    <!-- Visual diagram -->
+                    <div id="alloc-diagram" class="alloc-diagram">
+                        <svg viewBox="0 0 900 500" id="alloc-svg">
+                            <!-- Will be populated by JavaScript -->
+                        </svg>
+                    </div>
+
+                    <!-- Code snippet -->
+                    <div id="alloc-code" class="code-block">
+                        <pre id="alloc-code-content">
+// 配置請求
+EFI_STATUS Status;
+EFI_PHYSICAL_ADDRESS Address;
+
+Status = gBS->AllocatePages (
+    AllocateAnyPages,           // 配置類型：任意位址
+    EfiBootServicesData,        // 記憶體類型
+    4,                          // 頁數 (4 * 4KB = 16KB)
+    &Address                    // 輸出：配置的位址
+);</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h2 data-i18n="section3.2.title">3.2 配置演算法詳解</h2>
+                <div class="algorithm-box">
+                    <h4 data-i18n="section3.2.algo">First-Fit 演算法</h4>
+                    <ol>
+                        <li data-i18n="section3.2.step1">從 gMemoryMap 鏈結串列的頭部開始遍歷</li>
+                        <li><span data-i18n="section3.2.step2">對每個 MEMORY_MAP_ENTRY 檢查：</span>
+                            <ul>
+                                <li data-i18n="section3.2.step2a">類型是否為 EfiConventionalMemory（可用記憶體）</li>
+                                <li data-i18n="section3.2.step2b">大小是否足夠容納請求的頁數</li>
+                                <li data-i18n="section3.2.step2c">位址是否符合對齊要求</li>
+                            </ul>
+                        </li>
+                        <li data-i18n="section3.2.step3">找到第一個符合條件的區塊後停止搜尋</li>
+                        <li data-i18n="section3.2.step4">分割該區塊，更新記憶體映射表</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Memory Deallocation -->
+        <section id="deallocation" class="section">
+            <h1 data-i18n="section4.title">4. 記憶體釋放流程</h1>
+            
+            <div class="subsection">
+                <h2 data-i18n="section4.1.title">4.1 FreePages 釋放流程</h2>
+                <p class="description" data-i18n="section4.1.desc">
+                    當呼叫 <code>gBS->FreePages()</code> 時，記憶體管理器會將記憶體歸還並嘗試合併相鄰的空閒區塊：
+                </p>
+
+                <div class="step-controls">
+                    <button id="free-prev" class="step-btn" disabled data-i18n="btn.prev">← 上一步</button>
+                    <span id="free-step-indicator" class="step-indicator">步驟 1 / 6</span>
+                    <button id="free-next" class="step-btn" data-i18n="btn.next">下一步 →</button>
+                    <button id="free-reset" class="step-btn reset-btn" data-i18n="btn.reset">重置</button>
+                </div>
+
+                <div id="deallocation-viz" class="allocation-container">
+                    <div id="free-description" class="step-description">
+                        <h3>步驟 1：接收釋放請求</h3>
+                        <p>應用程式呼叫 <code>FreePages(0x00200000, 4)</code></p>
+                        <p>請求釋放位址 <strong>0x00200000</strong> 的 <strong>4 頁</strong> 記憶體</p>
+                    </div>
+
+                    <div id="free-diagram" class="alloc-diagram">
+                        <svg viewBox="0 0 900 400" id="free-svg">
+                            <!-- Will be populated by JavaScript -->
+                        </svg>
+                    </div>
+
+                    <div id="free-code" class="code-block">
+                        <pre id="free-code-content">
+// 釋放請求
+EFI_STATUS Status;
+
+Status = gBS->FreePages (
+    0x00200000,    // 要釋放的記憶體位址
+    4              // 頁數 (4 * 4KB = 16KB)
+);</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h2 data-i18n="section4.2.title">4.2 記憶體合併 (Coalescing)</h2>
+                <p class="description" data-i18n="section4.2.desc">
+                    釋放記憶體後，管理器會檢查相鄰區塊是否也是空閒的，如果是則合併它們以減少碎片化：
+                </p>
+                
+                <div class="merge-diagram">
+                    <div class="merge-before">
+                        <h4 data-i18n="section4.2.before">合併前</h4>
+                        <div class="merge-blocks">
+                            <div class="merge-block free" data-i18n="section4.2.free">Free<br><small>8 頁</small></div>
+                            <div class="merge-block releasing" data-i18n="section4.2.releasing">Releasing<br><small>4 頁</small></div>
+                            <div class="merge-block free" data-i18n="section4.2.free">Free<br><small>12 頁</small></div>
+                        </div>
+                    </div>
+                    <div class="merge-arrow">→</div>
+                    <div class="merge-after">
+                        <h4 data-i18n="section4.2.after">合併後</h4>
+                        <div class="merge-blocks">
+                            <div class="merge-block free large" data-i18n="section4.2.free">Free<br><small>24 頁</small></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p data-i18n="footer.text">UEFI EDK2 記憶體管理視覺化 | 教育用途</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
