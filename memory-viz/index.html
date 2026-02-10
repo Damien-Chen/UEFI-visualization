@@ -18,6 +18,11 @@
             <li><a href="#memory-layout" class="nav-link" data-i18n="nav.memoryLayout">記憶體配置圖</a></li>
             <li><a href="#allocation" class="nav-link" data-i18n="nav.allocation">記憶體配置</a></li>
             <li><a href="#deallocation" class="nav-link" data-i18n="nav.deallocation">記憶體釋放</a></li>
+            <li><a href="#pool-allocation" class="nav-link" data-i18n="nav.poolAllocation">Pool 配置</a></li>
+            <li><a href="#boot-timeline" class="nav-link" data-i18n="nav.bootTimeline">啟動時間線</a></li>
+            <li><a href="#policy-comparator" class="nav-link" data-i18n="nav.policyComparator">策略比較</a></li>
+            <li><a href="#fragmentation-heatmap" class="nav-link" data-i18n="nav.fragmentation">碎片化</a></li>
+            <li><a href="#runtime-handoff" class="nav-link" data-i18n="nav.runtimeHandoff">Runtime 交接</a></li>
         </ul>
         <div class="lang-switcher">
             <button class="lang-btn" data-lang="zh-TW" title="繁體中文">中文</button>
@@ -622,7 +627,215 @@ Status = gBS->FreePages (
                 </div>
             </div>
         </section>
+        <!-- Section 5: Pool Allocation -->
+        <section id="pool-allocation" class="section">
+            <h1 data-i18n="section5.title">5. Pool 記憶體配置</h1>
+            
+            <div class="subsection">
+                <h2 data-i18n="section5.1.title">5.1 AllocatePool 配置流程</h2>
+                <p class="description" data-i18n="section5.1.desc">
+                    <code>AllocatePool</code> 用於配置小型記憶體區塊。它在已配置的頁面中管理 Pool，使用 <code>POOL_HEAD</code> 結構追蹤每個配置。
+                </p>
+
+                <div class="step-controls">
+                    <button id="pool-prev" class="step-btn" disabled data-i18n="btn.prev">← 上一步</button>
+                    <span id="pool-step-indicator" class="step-indicator">步驟 1 / 5</span>
+                    <button id="pool-next" class="step-btn" data-i18n="btn.next">下一步 →</button>
+                    <button id="pool-reset" class="step-btn reset-btn" data-i18n="btn.reset">重置</button>
+                </div>
+
+                <div id="pool-viz" class="allocation-container">
+                    <div id="pool-description" class="step-description">
+                        <h3>步驟 1：接收 Pool 配置請求</h3>
+                        <p>應用程式呼叫 <code>AllocatePool(EfiBootServicesData, 128, &Buffer)</code></p>
+                    </div>
+
+                    <div id="pool-diagram" class="alloc-diagram">
+                        <svg viewBox="0 0 900 500" id="pool-svg">
+                        </svg>
+                    </div>
+
+                    <div id="pool-code" class="code-block">
+                        <pre id="pool-code-content"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h2 data-i18n="section5.2.title">5.2 Pool 結構詳解</h2>
+                <div class="code-block">
+                    <pre>
+typedef struct {
+    UINT32          Signature;    // 'phd0'
+    UINT32          Reserved;     // Padding
+    EFI_MEMORY_TYPE Type;         // Memory type
+    UINTN           Size;         // Allocation size (including header)
+    CHAR8           Data[1];      // Start of user data
+} POOL_HEAD;</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: Boot Timeline -->
+        <section id="boot-timeline" class="section">
+            <h1 data-i18n="section6.title">6. 啟動階段記憶體時間線</h1>
+            
+            <div class="subsection">
+                <h2 data-i18n="section6.1.title">6.1 記憶體映射演進</h2>
+                <p class="description" data-i18n="section6.1.desc">
+                    隨著系統啟動，記憶體映射會經歷不同的階段變化。點擊各階段查看該階段的記憶體狀態：
+                </p>
+
+                <div class="timeline-bar">
+                    <button class="timeline-phase active" data-phase="sec">
+                        <span class="phase-name" data-i18n="timeline.sec">SEC</span>
+                        <span class="phase-desc" data-i18n="timeline.secDesc">安全驗證</span>
+                    </button>
+                    <div class="timeline-connector"></div>
+                    <button class="timeline-phase" data-phase="pei">
+                        <span class="phase-name" data-i18n="timeline.pei">PEI</span>
+                        <span class="phase-desc" data-i18n="timeline.peiDesc">初始化基本記憶體</span>
+                    </button>
+                    <div class="timeline-connector"></div>
+                    <button class="timeline-phase" data-phase="dxe">
+                        <span class="phase-name" data-i18n="timeline.dxe">DXE</span>
+                        <span class="phase-desc" data-i18n="timeline.dxeDesc">驅動執行環境</span>
+                    </button>
+                    <div class="timeline-connector"></div>
+                    <button class="timeline-phase" data-phase="bds">
+                        <span class="phase-name" data-i18n="timeline.bds">BDS</span>
+                        <span class="phase-desc" data-i18n="timeline.bdsDesc">啟動設備選擇</span>
+                    </button>
+                    <div class="timeline-connector"></div>
+                    <button class="timeline-phase" data-phase="exit">
+                        <span class="phase-name" data-i18n="timeline.exit">ExitBootServices</span>
+                        <span class="phase-desc" data-i18n="timeline.exitDesc">移交給 OS</span>
+                    </button>
+                    <div class="timeline-connector"></div>
+                    <button class="timeline-phase" data-phase="os">
+                        <span class="phase-name" data-i18n="timeline.os">OS Runtime</span>
+                        <span class="phase-desc" data-i18n="timeline.osDesc">作業系統運行</span>
+                    </button>
+                </div>
+
+                <div class="diagram-container">
+                    <h3 data-i18n="timeline.mapTitle">記憶體映射快照</h3>
+                    <div id="timeline-map" class="timeline-map-container">
+                        <svg viewBox="0 0 900 300" id="timeline-svg"></svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 7: Policy Comparator -->
+        <section id="policy-comparator" class="section">
+            <h1 data-i18n="section7.title">7. 配置策略比較</h1>
+            
+            <div class="subsection">
+                <h2 data-i18n="section7.1.title">7.1 配置演算法比較</h2>
+                <p class="description" data-i18n="section7.1.desc">
+                    對相同的記憶體佈局和配置請求，不同的演算法會選擇不同的區塊。選擇演算法查看差異：
+                </p>
+
+                <div class="policy-selector">
+                    <button class="policy-btn active" data-policy="first-fit" data-i18n="policy.firstFit">First-Fit</button>
+                    <button class="policy-btn" data-policy="best-fit" data-i18n="policy.bestFit">Best-Fit</button>
+                    <button class="policy-btn" data-policy="next-fit" data-i18n="policy.nextFit">Next-Fit</button>
+                    <span class="policy-request" data-i18n="policy.request">配置請求: 4 頁</span>
+                </div>
+
+                <div class="diagram-container">
+                    <div id="policy-diagram">
+                        <svg viewBox="0 0 900 350" id="policy-svg"></svg>
+                    </div>
+                    <div id="policy-result" class="policy-result"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 8: Fragmentation Heatmap -->
+        <section id="fragmentation-heatmap" class="section">
+            <h1 data-i18n="section8.title">8. 記憶體碎片化視覺化</h1>
+            
+            <div class="subsection">
+                <h2 data-i18n="section8.1.title">8.1 碎片化熱力圖</h2>
+                <p class="description" data-i18n="section8.1.desc">
+                    互動式模擬記憶體配置與釋放，觀察碎片化程度的變化：
+                </p>
+
+                <div class="frag-controls">
+                    <button id="frag-allocate" class="step-btn" data-i18n="frag.allocate">配置</button>
+                    <button id="frag-free" class="step-btn" data-i18n="frag.free">釋放</button>
+                    <button id="frag-reset" class="step-btn reset-btn" data-i18n="frag.reset">重置</button>
+                </div>
+
+                <div class="diagram-container">
+                    <div id="frag-heatmap" class="frag-heatmap">
+                        <svg viewBox="0 0 900 120" id="frag-svg"></svg>
+                    </div>
+                    <div id="frag-metrics" class="frag-metrics">
+                        <div class="metric-card">
+                            <span class="metric-label" data-i18n="frag.freeBlocks">可用區塊數</span>
+                            <span class="metric-value" id="frag-free-blocks">1</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-label" data-i18n="frag.largestFree">最大可用區塊</span>
+                            <span class="metric-value" id="frag-largest-free">64</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-label" data-i18n="frag.fragRatio">碎片化比率</span>
+                            <span class="metric-value" id="frag-ratio">0%</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-label" data-i18n="frag.totalFree">總可用空間</span>
+                            <span class="metric-value" id="frag-total-free">64</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-label" data-i18n="frag.ops">操作次數</span>
+                            <span class="metric-value" id="frag-ops">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 9: Runtime Handoff -->
+        <section id="runtime-handoff" class="section">
+            <h1 data-i18n="section9.title">9. ExitBootServices 記憶體交接</h1>
+            
+            <div class="subsection">
+                <h2 data-i18n="section9.1.title">9.1 啟動服務到 Runtime 交接</h2>
+                <p class="description" data-i18n="section9.1.desc">
+                    當 OS Loader 呼叫 <code>ExitBootServices()</code> 後，Boot Services 記憶體被回收，只有 Runtime 和 ACPI 區域保留：
+                </p>
+
+                <div class="handoff-container">
+                    <div class="handoff-panel">
+                        <h3 data-i18n="handoff.before">ExitBootServices 之前</h3>
+                        <div id="handoff-before">
+                            <svg viewBox="0 0 400 400" id="handoff-before-svg"></svg>
+                        </div>
+                    </div>
+                    <div class="handoff-arrow">→</div>
+                    <div class="handoff-panel">
+                        <h3 data-i18n="handoff.after">ExitBootServices 之後</h3>
+                        <div id="handoff-after">
+                            <svg viewBox="0 0 400 400" id="handoff-after-svg"></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
+
+    <!-- Export Toolbar -->
+    <div id="export-toolbar" class="export-toolbar">
+        <button id="export-toggle" class="export-toggle-btn" data-i18n="export.title">匯出</button>
+        <div id="export-dropdown" class="export-dropdown hidden">
+            <button id="export-svg" class="export-option" data-i18n="export.copySvg">複製 SVG</button>
+            <button id="export-png" class="export-option" data-i18n="export.downloadPng">下載 PNG</button>
+        </div>
+    </div>
 
     <footer class="footer">
         <p data-i18n="footer.text">UEFI EDK2 記憶體管理視覺化 | 教育用途</p>

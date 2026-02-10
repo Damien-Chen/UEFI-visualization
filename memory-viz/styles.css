@@ -1061,3 +1061,328 @@ g:has(.reserved-entry) .entry-type {
         transform: scaleX(1);
     }
 }
+
+/* ============================================
+   Section 5: Pool Allocation
+   ============================================ */
+
+/* ============================================
+   Section 6: Boot Timeline
+   ============================================ */
+.timeline-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+}
+
+.timeline-phase {
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0.75rem 1.2rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s ease;
+    min-width: 100px;
+}
+
+.timeline-phase:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.timeline-phase.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
+}
+
+.timeline-phase .phase-name {
+    display: block;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-color);
+}
+
+.timeline-phase .phase-desc {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+}
+
+.timeline-phase.active .phase-desc {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.timeline-connector {
+    width: 30px;
+    height: 3px;
+    background: var(--border-color);
+    flex-shrink: 0;
+}
+
+.timeline-map-container {
+    min-height: 250px;
+    overflow-x: auto;
+}
+
+/* ============================================
+   Section 7: Policy Comparator
+   ============================================ */
+.policy-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+}
+
+.policy-btn {
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.policy-btn:hover {
+    border-color: var(--primary-color);
+}
+
+.policy-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.policy-request {
+    color: var(--warning-color);
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-left: 1rem;
+}
+
+.policy-result {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    min-height: 40px;
+}
+
+/* ============================================
+   Section 8: Fragmentation Heatmap
+   ============================================ */
+.frag-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.frag-heatmap {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+}
+
+.frag-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.metric-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.metric-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+}
+
+.metric-value {
+    display: block;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--info-color);
+    font-family: 'Consolas', monospace;
+}
+
+/* ============================================
+   Section 9: Runtime Handoff
+   ============================================ */
+.handoff-container {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.handoff-panel {
+    flex: 1;
+    min-width: 300px;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.handoff-panel h3 {
+    color: var(--info-color);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.handoff-arrow {
+    display: flex;
+    align-items: center;
+    font-size: 3rem;
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+/* ============================================
+   Export Toolbar
+   ============================================ */
+.export-toolbar {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 999;
+}
+
+.export-toggle-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+    transition: all 0.2s ease;
+}
+
+.export-toggle-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+}
+
+.export-dropdown {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    margin-bottom: 0.5rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    min-width: 160px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.export-dropdown.hidden {
+    display: none;
+}
+
+.export-option {
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    color: var(--text-color);
+    padding: 0.75rem 1.2rem;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.15s ease;
+}
+
+.export-option:hover {
+    background: var(--bg-tertiary);
+}
+
+/* ============================================
+   Code-to-Visual Linking
+   ============================================ */
+.code-highlight-link {
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+.code-highlight-link:hover {
+    background: rgba(37, 99, 235, 0.3);
+}
+
+.svg-linked-highlight {
+    filter: drop-shadow(0 0 20px var(--primary-color)) brightness(1.4) !important;
+    transition: filter 0.3s ease;
+}
+
+/* ============================================
+   Responsive additions
+   ============================================ */
+@media (max-width: 768px) {
+    .timeline-bar {
+        gap: 0.5rem;
+    }
+    
+    .timeline-connector {
+        width: 15px;
+    }
+
+    .timeline-phase {
+        min-width: 70px;
+        padding: 0.5rem 0.6rem;
+    }
+    
+    .handoff-container {
+        flex-direction: column;
+    }
+    
+    .handoff-arrow {
+        justify-content: center;
+        transform: rotate(90deg);
+    }
+    
+    .frag-metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .policy-selector {
+        flex-direction: column;
+    }
+
+    .nav-links {
+        gap: 0.25rem;
+    }
+
+    .nav-link {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.8rem;
+    }
+}

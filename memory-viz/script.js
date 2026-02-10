@@ -6,6 +6,13 @@ document.addEventListener('DOMContentLoaded', function() {
     initNavigation();
     initAllocationVisualization();
     initDeallocationVisualization();
+    initPoolVisualization();
+    initTimelineVisualization();
+    initPolicyComparator();
+    initFragmentationHeatmap();
+    initRuntimeHandoff();
+    initCodeLinking();
+    initExportToolbar();
 });
 
 // Navigation
@@ -670,4 +677,745 @@ function renderFreeDiagram(stepIndex) {
     }
 
     svg.innerHTML = svgContent;
+}
+
+// ============================================
+// Pool Allocation Visualization (Section 5)
+// ============================================
+
+function getPoolSteps() {
+    return [
+        {
+            titleKey: 'pool.step1.title',
+            descKey: 'pool.step1.desc',
+            code: `// Pool Allocation Request
+EFI_STATUS Status;
+VOID       *Buffer;
+
+Status = gBS->AllocatePool (
+    EfiBootServicesData,   // Memory type
+    128,                   // Size in bytes
+    &Buffer                // Output: pointer
+);`
+        },
+        {
+            titleKey: 'pool.step2.title',
+            descKey: 'pool.step2.desc',
+            code: `// CoreAllocatePool internal logic
+// Add POOL_HEAD header size
+UINTN NewSize = Size + sizeof(POOL_HEAD);
+// NewSize = 128 + 32 = 160 bytes
+
+// Determine if this is a small or large allocation
+// Small: <= MAX_POOL_SIZE (page-managed slab)
+// Large: allocate dedicated pages
+if (NewSize > MAX_POOL_SIZE) {
+    // Allocate whole pages via AllocatePages
+} else {
+    // Use pool slab allocator
+}`
+        },
+        {
+            titleKey: 'pool.step3.title',
+            descKey: 'pool.step3.desc',
+            code: `// Find pool for this memory type
+POOL *Pool = &mPoolHead[MemoryType];
+
+// Search free list for a block >= NewSize
+LIST_ENTRY *FreeList;
+POOL_FREE  *Free;
+
+FreeList = &Pool->FreeList[BinIndex];
+if (!IsListEmpty(FreeList)) {
+    Free = CR(FreeList->ForwardLink, POOL_FREE, Link, ...);
+    // Found a free block in the bin!
+}`
+        },
+        {
+            titleKey: 'pool.step4.title',
+            descKey: 'pool.step4.desc',
+            code: `// Carve allocation from the free block
+POOL_HEAD *Head = (POOL_HEAD *)Free;
+
+Head->Signature = POOL_HEAD_SIGNATURE;  // 'phd0'
+Head->Size      = NewSize;              // 160
+Head->Type      = MemoryType;           // EfiBootServicesData
+
+// If remaining space is large enough,
+// put it back on the free list
+UINTN Remaining = Free->Size - NewSize;
+if (Remaining >= MIN_POOL_SIZE) {
+    POOL_FREE *NewFree = (POOL_FREE *)((UINT8 *)Head + NewSize);
+    InsertHeadList(&Pool->FreeList[NewBin], &NewFree->Link);
+}`
+        },
+        {
+            titleKey: 'pool.step5.title',
+            descKey: 'pool.step5.desc',
+            code: `// Return pointer to user data area
+// (just past the POOL_HEAD header)
+*Buffer = (VOID *)(Head + 1);
+// *Buffer = &Head->Data[0]
+
+return EFI_SUCCESS;
+
+// Memory layout:
+// [POOL_HEAD (32B)] [User Data (128B)] [Free ...]
+//                   ^^^ returned pointer`
+        }
+    ];
+}
+
+let currentPoolStep = 0;
+
+function initPoolVisualization() {
+    const prevBtn = document.getElementById('pool-prev');
+    const nextBtn = document.getElementById('pool-next');
+    const resetBtn = document.getElementById('pool-reset');
+
+    if (!prevBtn || !nextBtn || !resetBtn) return;
+
+    prevBtn.addEventListener('click', () => changePoolStep(-1));
+    nextBtn.addEventListener('click', () => changePoolStep(1));
+    resetBtn.addEventListener('click', () => resetPoolVisualization());
+
+    renderPoolStep(0);
+}
+
+function changePoolStep(delta) {
+    const steps = getPoolSteps();
+    const newStep = currentPoolStep + delta;
+    if (newStep >= 0 && newStep < steps.length) {
+        currentPoolStep = newStep;
+        renderPoolStep(currentPoolStep);
+    }
+}
+
+function resetPoolVisualization() {
+    currentPoolStep = 0;
+    renderPoolStep(0);
+}
+
+function renderPoolStep(stepIndex) {
+    const steps = getPoolSteps();
+    const step = steps[stepIndex];
+
+    const descEl = document.getElementById('pool-description');
+    descEl.innerHTML = `<h3>${t(step.titleKey)}</h3><p>${t(step.descKey)}</p>`;
+    descEl.classList.add('fade-in');
+    setTimeout(() => descEl.classList.remove('fade-in'), 500);
+
+    const codeEl = document.getElementById('pool-code-content');
+    codeEl.textContent = step.code;
+
+    renderPoolDiagram(stepIndex);
+
+    document.getElementById('pool-prev').disabled = stepIndex === 0;
+    document.getElementById('pool-next').disabled = stepIndex === steps.length - 1;
+    document.getElementById('pool-step-indicator').textContent =
+        t('step.indicator', { current: stepIndex + 1, total: steps.length });
+}
+
+function renderPoolDiagram(stepIndex) {
+    const svg = document.getElementById('pool-svg');
+    const pageW = 800, pageH = 80, pageX = 50, pageY = 60;
+    const headW = 120, dataW = 200, freeW = pageW - headW - dataW;
+
+    let s = `<defs>
+        <marker id="pool-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6"/>
+        </marker>
+    </defs>`;
+
+    // Pool page outline
+    s += `<rect x="${pageX}" y="${pageY}" width="${pageW}" height="${pageH}" rx="6"
+          fill="rgba(59,130,246,0.08)" stroke="#475569" stroke-width="2"/>`;
+    s += `<text x="${pageX + pageW/2}" y="${pageY - 10}" fill="#94a3b8" font-size="12" text-anchor="middle">${t('pool.pageHeader')}</text>`;
+
+    // POOL_HEAD block
+    const headColor = stepIndex >= 3 ? '#3b82f6' : '#475569';
+    const headBg = stepIndex >= 3 ? 'rgba(59,130,246,0.25)' : 'rgba(71,85,105,0.15)';
+    s += `<rect x="${pageX}" y="${pageY}" width="${headW}" height="${pageH}" rx="6"
+          fill="${headBg}" stroke="${headColor}" stroke-width="2"
+          ${stepIndex === 3 ? 'style="filter: drop-shadow(0 0 10px #3b82f6)"' : ''}/>`;
+    s += `<text x="${pageX + headW/2}" y="${pageY + 25}" fill="${headColor}" font-size="11" text-anchor="middle" font-weight="600">POOL_HEAD</text>`;
+    s += `<text x="${pageX + headW/2}" y="${pageY + 42}" fill="#94a3b8" font-size="9" text-anchor="middle">Sig: 'phd0'</text>`;
+    s += `<text x="${pageX + headW/2}" y="${pageY + 56}" fill="#94a3b8" font-size="9" text-anchor="middle">Size: 160</text>`;
+    s += `<text x="${pageX + headW/2}" y="${pageY + 70}" fill="#94a3b8" font-size="9" text-anchor="middle">Type: BsData</text>`;
+
+    // Data block
+    const dataX = pageX + headW;
+    const dataColor = stepIndex >= 4 ? '#22c55e' : '#475569';
+    const dataBg = stepIndex >= 4 ? 'rgba(34,197,94,0.2)' : 'rgba(71,85,105,0.1)';
+    s += `<rect x="${dataX}" y="${pageY}" width="${dataW}" height="${pageH}"
+          fill="${dataBg}" stroke="${dataColor}" stroke-width="2"
+          ${stepIndex === 4 ? 'style="filter: drop-shadow(0 0 12px #22c55e)"' : ''}/>`;
+    s += `<text x="${dataX + dataW/2}" y="${pageY + 35}" fill="${dataColor}" font-size="12" text-anchor="middle" font-weight="600">${t('pool.data')}</text>`;
+    s += `<text x="${dataX + dataW/2}" y="${pageY + 55}" fill="#94a3b8" font-size="10" text-anchor="middle">128 bytes</text>`;
+
+    // Free space
+    const freeX = dataX + dataW;
+    s += `<rect x="${freeX}" y="${pageY}" width="${freeW}" height="${pageH}" rx="6"
+          fill="rgba(34,197,94,0.08)" stroke="#475569" stroke-width="1" stroke-dasharray="5,3"/>`;
+    s += `<text x="${freeX + freeW/2}" y="${pageY + 40}" fill="#64748b" font-size="11" text-anchor="middle">${t('pool.free')}</text>`;
+    s += `<text x="${freeX + freeW/2}" y="${pageY + 58}" fill="#64748b" font-size="9" text-anchor="middle">${4096 - 160} bytes</text>`;
+
+    // Step-specific annotations
+    if (stepIndex === 0) {
+        s += `<text x="${pageX + pageW/2}" y="${pageY + pageH + 40}" fill="#f59e0b" font-size="13" text-anchor="middle" font-weight="600">
+            AllocatePool(EfiBootServicesData, 128, &Buffer)</text>`;
+    }
+    if (stepIndex === 1) {
+        s += `<rect x="250" y="180" width="400" height="90" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>`;
+        s += `<text x="450" y="205" fill="#f59e0b" font-size="12" text-anchor="middle" font-weight="600">Size Calculation</text>`;
+        s += `<text x="270" y="230" fill="#94a3b8" font-size="11">Request: 128 bytes + POOL_HEAD: 32 bytes = 160 bytes</text>`;
+        s += `<text x="270" y="250" fill="#94a3b8" font-size="11">160 ≤ MAX_POOL_SIZE → Use slab allocator</text>`;
+    }
+    if (stepIndex === 2) {
+        s += `<path d="M 450 ${pageY + pageH + 10} L 450 ${pageY + pageH + 35}" stroke="#f59e0b" stroke-width="3" marker-end="url(#pool-arrow)"/>`;
+        s += `<text x="450" y="${pageY + pageH + 55}" fill="#f59e0b" font-size="12" text-anchor="middle" font-weight="600">${t('diagram.searching')}</text>`;
+
+        const arrY = 200;
+        for (let i = 0; i < 5; i++) {
+            const ax = 150 + i * 140;
+            const isTarget = i === 2;
+            s += `<rect x="${ax}" y="${arrY}" width="120" height="50" rx="6"
+                  fill="${isTarget ? 'rgba(59,130,246,0.2)' : '#1e293b'}" stroke="${isTarget ? '#3b82f6' : '#475569'}" stroke-width="${isTarget ? 2 : 1}"/>`;
+            const types = ['Reserved', 'LoaderData', 'BsData', 'RtData', 'Conv'];
+            s += `<text x="${ax + 60}" y="${arrY + 20}" fill="${isTarget ? '#3b82f6' : '#94a3b8'}" font-size="10" text-anchor="middle" font-weight="${isTarget ? '600' : '400'}">${types[i]}</text>`;
+            s += `<text x="${ax + 60}" y="${arrY + 38}" fill="#64748b" font-size="9" text-anchor="middle">mPoolHead[${i}]</text>`;
+        }
+        s += `<text x="430" y="${arrY - 10}" fill="#f59e0b" font-size="11" text-anchor="middle">↓ ${t('policy.selected')}</text>`;
+    }
+    if (stepIndex === 4) {
+        s += `<path d="M ${dataX + 10} ${pageY + pageH + 15} L ${dataX + 10} ${pageY + pageH + 5}" stroke="#22c55e" stroke-width="3" marker-end="url(#pool-arrow)"/>`;
+        s += `<text x="${dataX + dataW/2}" y="${pageY + pageH + 35}" fill="#22c55e" font-size="13" text-anchor="middle" font-weight="600">
+            ✓ *Buffer = &Head->Data[0]</text>`;
+        s += `<text x="${dataX + dataW/2}" y="${pageY + pageH + 55}" fill="#94a3b8" font-size="11" text-anchor="middle">EFI_SUCCESS</text>`;
+    }
+
+    svg.innerHTML = s;
+}
+
+// ============================================
+// Boot Timeline Visualization (Section 6)
+// ============================================
+
+function getTimelinePhases() {
+    return {
+        sec: {
+            entries: [
+                { type: 'Reserved', start: 0, size: 10, color: '#ef4444' },
+                { type: 'T-RAM (Cache-as-RAM)', start: 10, size: 5, color: '#f59e0b' },
+                { type: 'Uninitialized', start: 15, size: 85, color: '#475569' }
+            ]
+        },
+        pei: {
+            entries: [
+                { type: 'Reserved', start: 0, size: 10, color: '#ef4444' },
+                { type: 'PEI Core', start: 10, size: 5, color: '#3b82f6' },
+                { type: 'PEI Heap', start: 15, size: 8, color: '#06b6d4' },
+                { type: 'Conventional', start: 23, size: 57, color: '#22c55e' },
+                { type: 'MMIO', start: 80, size: 10, color: '#f59e0b' },
+                { type: 'Reserved', start: 90, size: 10, color: '#ef4444' }
+            ]
+        },
+        dxe: {
+            entries: [
+                { type: 'Reserved', start: 0, size: 6, color: '#ef4444' },
+                { type: 'BsCode', start: 6, size: 8, color: '#3b82f6' },
+                { type: 'BsData', start: 14, size: 10, color: '#60a5fa' },
+                { type: 'RtCode', start: 24, size: 5, color: '#a855f7' },
+                { type: 'RtData', start: 29, size: 4, color: '#c084fc' },
+                { type: 'Conventional', start: 33, size: 37, color: '#22c55e' },
+                { type: 'ACPI NVS', start: 70, size: 5, color: '#14b8a6' },
+                { type: 'MMIO', start: 75, size: 15, color: '#f59e0b' },
+                { type: 'Reserved', start: 90, size: 10, color: '#ef4444' }
+            ]
+        },
+        bds: {
+            entries: [
+                { type: 'Reserved', start: 0, size: 6, color: '#ef4444' },
+                { type: 'BsCode', start: 6, size: 10, color: '#3b82f6' },
+                { type: 'BsData', start: 16, size: 12, color: '#60a5fa' },
+                { type: 'LoaderCode', start: 28, size: 4, color: '#f97316' },
+                { type: 'RtCode', start: 32, size: 5, color: '#a855f7' },
+                { type: 'RtData', start: 37, size: 4, color: '#c084fc' },
+                { type: 'Conventional', start: 41, size: 24, color: '#22c55e' },
+                { type: 'ACPI Reclaim', start: 65, size: 3, color: '#2dd4bf' },
+                { type: 'ACPI NVS', start: 68, size: 7, color: '#14b8a6' },
+                { type: 'MMIO', start: 75, size: 15, color: '#f59e0b' },
+                { type: 'Reserved', start: 90, size: 10, color: '#ef4444' }
+            ]
+        },
+        exit: {
+            entries: [
+                { type: 'Reserved', start: 0, size: 6, color: '#ef4444' },
+                { type: 'Conventional', start: 6, size: 26, color: '#22c55e' },
+                { type: 'RtCode', start: 32, size: 5, color: '#a855f7' },
+                { type: 'RtData', start: 37, size: 4, color: '#c084fc' },
+                { type: 'Conventional', start: 41, size: 24, color: '#22c55e' },
+                { type: 'ACPI NVS', start: 65, size: 10, color: '#14b8a6' },
+                { type: 'MMIO', start: 75, size: 15, color: '#f59e0b' },
+                { type: 'Reserved', start: 90, size: 10, color: '#ef4444' }
+            ]
+        },
+        os: {
+            entries: [
+                { type: 'Reserved', start: 0, size: 6, color: '#ef4444' },
+                { type: 'OS Managed', start: 6, size: 26, color: '#22c55e' },
+                { type: 'RtCode', start: 32, size: 5, color: '#a855f7' },
+                { type: 'RtData', start: 37, size: 4, color: '#c084fc' },
+                { type: 'OS Managed', start: 41, size: 24, color: '#22c55e' },
+                { type: 'ACPI NVS', start: 65, size: 10, color: '#14b8a6' },
+                { type: 'MMIO', start: 75, size: 15, color: '#f59e0b' },
+                { type: 'Reserved', start: 90, size: 10, color: '#ef4444' }
+            ]
+        }
+    };
+}
+
+function initTimelineVisualization() {
+    const phases = document.querySelectorAll('.timeline-phase');
+    if (!phases.length) return;
+
+    phases.forEach(btn => {
+        btn.addEventListener('click', () => {
+            phases.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderTimelineMap(btn.dataset.phase);
+        });
+    });
+
+    renderTimelineMap('sec');
+}
+
+function renderTimelineMap(phase) {
+    const svg = document.getElementById('timeline-svg');
+    if (!svg) return;
+    const data = getTimelinePhases()[phase];
+    if (!data) return;
+
+    const barY = 40, barH = 60, barX = 50, barW = 800;
+    let s = '';
+
+    s += `<text x="${barX + barW/2}" y="25" fill="#94a3b8" font-size="13" text-anchor="middle" font-weight="600">${phase.toUpperCase()} Phase Memory Map</text>`;
+
+    data.entries.forEach(entry => {
+        const x = barX + (entry.start / 100) * barW;
+        const w = (entry.size / 100) * barW;
+        s += `<rect x="${x}" y="${barY}" width="${w}" height="${barH}" fill="${entry.color}" opacity="0.7" stroke="#0f172a" stroke-width="1"/>`;
+        if (w > 50) {
+            s += `<text x="${x + w/2}" y="${barY + barH/2 - 5}" fill="white" font-size="10" text-anchor="middle" font-weight="600">${entry.type}</text>`;
+            s += `<text x="${x + w/2}" y="${barY + barH/2 + 12}" fill="rgba(255,255,255,0.7)" font-size="9" text-anchor="middle">${entry.size}%</text>`;
+        }
+    });
+
+    s += `<text x="${barX}" y="${barY + barH + 20}" fill="#64748b" font-size="9">0x00000000</text>`;
+    s += `<text x="${barX + barW}" y="${barY + barH + 20}" fill="#64748b" font-size="9" text-anchor="end">0xFFFFFFFF</text>`;
+    s += `<text x="${barX + barW/2}" y="${barY + barH + 20}" fill="#64748b" font-size="9" text-anchor="middle">Address Space</text>`;
+
+    const legendTypes = [...new Set(data.entries.map(e => e.type))];
+    const legendY = barY + barH + 40;
+    legendTypes.forEach((type, i) => {
+        const lx = barX + (i % 5) * 170;
+        const ly = legendY + Math.floor(i / 5) * 20;
+        const entry = data.entries.find(e => e.type === type);
+        s += `<rect x="${lx}" y="${ly}" width="12" height="12" rx="2" fill="${entry.color}" opacity="0.7"/>`;
+        s += `<text x="${lx + 18}" y="${ly + 10}" fill="#94a3b8" font-size="10">${type}</text>`;
+    });
+
+    svg.innerHTML = s;
+}
+
+// ============================================
+// Policy Comparator (Section 7)
+// ============================================
+
+function getPolicyMemoryLayout() {
+    return [
+        { type: 'BsData', pages: 8, color: '#3b82f6', bgColor: 'rgba(59,130,246,0.2)' },
+        { type: 'Conventional', pages: 6, color: '#22c55e', bgColor: 'rgba(34,197,94,0.15)' },
+        { type: 'BsData', pages: 4, color: '#3b82f6', bgColor: 'rgba(59,130,246,0.2)' },
+        { type: 'Conventional', pages: 4, color: '#22c55e', bgColor: 'rgba(34,197,94,0.15)' },
+        { type: 'RtData', pages: 6, color: '#a855f7', bgColor: 'rgba(168,85,247,0.15)' },
+        { type: 'Conventional', pages: 12, color: '#22c55e', bgColor: 'rgba(34,197,94,0.15)' },
+        { type: 'BsData', pages: 3, color: '#3b82f6', bgColor: 'rgba(59,130,246,0.2)' },
+        { type: 'Conventional', pages: 8, color: '#22c55e', bgColor: 'rgba(34,197,94,0.15)' }
+    ];
+}
+
+function initPolicyComparator() {
+    const buttons = document.querySelectorAll('.policy-btn');
+    if (!buttons.length) return;
+
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderPolicyDiagram(btn.dataset.policy);
+        });
+    });
+
+    renderPolicyDiagram('first-fit');
+}
+
+function renderPolicyDiagram(policy) {
+    const svg = document.getElementById('policy-svg');
+    const resultEl = document.getElementById('policy-result');
+    if (!svg) return;
+
+    const layout = getPolicyMemoryLayout();
+    const requestPages = 4;
+    const totalPages = layout.reduce((sum, b) => sum + b.pages, 0);
+    const barX = 50, barY = 50, barW = 800, barH = 80;
+
+    let s = '';
+    let selectedIdx = -1;
+
+    const convBlocks = layout.map((b, i) => ({ ...b, idx: i })).filter(b => b.type === 'Conventional' && b.pages >= requestPages);
+
+    if (policy === 'first-fit') {
+        selectedIdx = convBlocks.length > 0 ? convBlocks[0].idx : -1;
+    } else if (policy === 'best-fit') {
+        if (convBlocks.length > 0) {
+            convBlocks.sort((a, b) => a.pages - b.pages);
+            selectedIdx = convBlocks[0].idx;
+        }
+    } else if (policy === 'next-fit') {
+        const startIdx = 3;
+        for (let i = 0; i < layout.length; i++) {
+            const idx = (startIdx + i) % layout.length;
+            if (layout[idx].type === 'Conventional' && layout[idx].pages >= requestPages) {
+                selectedIdx = idx;
+                break;
+            }
+        }
+    }
+
+    let currentX = barX;
+    layout.forEach((block, idx) => {
+        const w = (block.pages / totalPages) * barW;
+        const isSelected = idx === selectedIdx;
+        const isConvSmall = block.type === 'Conventional' && block.pages < requestPages;
+        let strokeW = isSelected ? 3 : 2;
+        let extra = isSelected ? `style="filter: drop-shadow(0 0 12px ${block.color})"` : '';
+
+        s += `<g ${extra}>`;
+        s += `<rect x="${currentX}" y="${barY}" width="${w}" height="${barH}" rx="4"
+              fill="${block.bgColor}" stroke="${block.color}" stroke-width="${strokeW}"
+              ${isConvSmall ? 'stroke-dasharray="4,3"' : ''}/>`;
+
+        if (w > 30) {
+            s += `<text x="${currentX + w/2}" y="${barY + 25}" fill="${block.color}" font-size="10" text-anchor="middle" font-weight="600">${block.type}</text>`;
+            s += `<text x="${currentX + w/2}" y="${barY + 45}" fill="#94a3b8" font-size="10" text-anchor="middle">${block.pages} ${t('frag.pages')}</text>`;
+        }
+
+        if (block.type === 'Conventional') {
+            if (isSelected) {
+                s += `<text x="${currentX + w/2}" y="${barY + barH + 20}" fill="#22c55e" font-size="10" text-anchor="middle" font-weight="600">✓ ${t('policy.selected')}</text>`;
+            } else if (block.pages < requestPages) {
+                s += `<text x="${currentX + w/2}" y="${barY + barH + 20}" fill="#ef4444" font-size="9" text-anchor="middle">✗ too small</text>`;
+            } else {
+                s += `<text x="${currentX + w/2}" y="${barY + barH + 20}" fill="#64748b" font-size="9" text-anchor="middle">${t('policy.skipped')}</text>`;
+            }
+        }
+
+        s += `</g>`;
+        currentX += w;
+    });
+
+    s += `<text x="${barX + barW/2}" y="30" fill="#f59e0b" font-size="13" text-anchor="middle" font-weight="600">${policy.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} — ${t('policy.request')}</text>`;
+
+    if (policy === 'next-fit') {
+        s += `<text x="${barX}" y="${barY + barH + 50}" fill="#f59e0b" font-size="10">Start ↓ index 3</text>`;
+    }
+
+    svg.innerHTML = s;
+
+    if (resultEl) {
+        const selectedBlock = selectedIdx >= 0 ? layout[selectedIdx] : null;
+        if (selectedBlock) {
+            const waste = selectedBlock.pages - requestPages;
+            resultEl.innerHTML = `<strong>${policy.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</strong>: ` +
+                `${t('policy.selected')} block #${selectedIdx + 1} (${selectedBlock.pages} ${t('frag.pages')}) — ` +
+                `${t('policy.fragAfter')} ${waste} ${t('frag.pages')} internal waste`;
+        } else {
+            resultEl.textContent = 'No suitable block found.';
+        }
+    }
+}
+
+// ============================================
+// Fragmentation Heatmap (Section 8)
+// ============================================
+
+let fragMemory = [];
+let fragOps = 0;
+let fragAllocId = 0;
+
+function initFragmentationHeatmap() {
+    const allocBtn = document.getElementById('frag-allocate');
+    const freeBtn = document.getElementById('frag-free');
+    const resetBtn = document.getElementById('frag-reset');
+
+    if (!allocBtn || !freeBtn || !resetBtn) return;
+
+    allocBtn.addEventListener('click', fragAllocate);
+    freeBtn.addEventListener('click', fragFree);
+    resetBtn.addEventListener('click', fragReset);
+
+    fragReset();
+}
+
+function fragReset() {
+    fragMemory = [{ type: 'free', size: 64, id: 0 }];
+    fragOps = 0;
+    fragAllocId = 1;
+    renderFragHeatmap();
+}
+
+function fragAllocate() {
+    const sizes = [2, 4, 6, 8];
+    const size = sizes[Math.floor(Math.random() * sizes.length)];
+
+    for (let i = 0; i < fragMemory.length; i++) {
+        if (fragMemory[i].type === 'free' && fragMemory[i].size >= size) {
+            const remaining = fragMemory[i].size - size;
+            const newBlock = { type: 'alloc', size: size, id: fragAllocId++ };
+            if (remaining > 0) {
+                fragMemory.splice(i, 1, newBlock, { type: 'free', size: remaining, id: 0 });
+            } else {
+                fragMemory.splice(i, 1, newBlock);
+            }
+            fragOps++;
+            renderFragHeatmap();
+            return;
+        }
+    }
+    fragOps++;
+    renderFragHeatmap();
+}
+
+function fragFree() {
+    const allocBlocks = fragMemory.filter(b => b.type === 'alloc');
+    if (allocBlocks.length === 0) return;
+
+    const target = allocBlocks[Math.floor(Math.random() * allocBlocks.length)];
+    const idx = fragMemory.indexOf(target);
+    fragMemory[idx] = { type: 'free', size: target.size, id: 0 };
+
+    for (let i = fragMemory.length - 1; i > 0; i--) {
+        if (fragMemory[i].type === 'free' && fragMemory[i - 1].type === 'free') {
+            fragMemory[i - 1].size += fragMemory[i].size;
+            fragMemory.splice(i, 1);
+        }
+    }
+
+    fragOps++;
+    renderFragHeatmap();
+}
+
+function renderFragHeatmap() {
+    const svg = document.getElementById('frag-svg');
+    if (!svg) return;
+
+    const totalSize = fragMemory.reduce((s, b) => s + b.size, 0);
+    const barX = 10, barY = 20, barW = 880, barH = 70;
+    let s = '';
+    let currentX = barX;
+
+    const allocColors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#06b6d4', '#84cc16'];
+
+    fragMemory.forEach(block => {
+        const w = (block.size / totalSize) * barW;
+        if (block.type === 'free') {
+            s += `<rect x="${currentX}" y="${barY}" width="${w}" height="${barH}" rx="3"
+                  fill="rgba(34,197,94,0.15)" stroke="#22c55e" stroke-width="1"/>`;
+            if (w > 20) {
+                s += `<text x="${currentX + w/2}" y="${barY + barH/2 + 4}" fill="#22c55e" font-size="${w > 40 ? 10 : 8}" text-anchor="middle">${block.size}</text>`;
+            }
+        } else {
+            const color = allocColors[block.id % allocColors.length];
+            s += `<rect x="${currentX}" y="${barY}" width="${w}" height="${barH}" rx="3"
+                  fill="${color}" opacity="0.6" stroke="${color}" stroke-width="1"/>`;
+            if (w > 20) {
+                s += `<text x="${currentX + w/2}" y="${barY + barH/2 + 4}" fill="white" font-size="${w > 40 ? 10 : 8}" text-anchor="middle">${block.size}</text>`;
+            }
+        }
+        currentX += w;
+    });
+
+    svg.innerHTML = s;
+
+    const freeBlocks = fragMemory.filter(b => b.type === 'free');
+    const totalFree = freeBlocks.reduce((s, b) => s + b.size, 0);
+    const largestFree = freeBlocks.length > 0 ? Math.max(...freeBlocks.map(b => b.size)) : 0;
+    const fragRatio = totalFree > 0 ? Math.round((1 - largestFree / totalFree) * 100) : 0;
+
+    const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+    el('frag-free-blocks', freeBlocks.length);
+    el('frag-largest-free', largestFree + ' ' + t('frag.pages'));
+    el('frag-ratio', fragRatio + '%');
+    el('frag-total-free', totalFree + ' ' + t('frag.pages'));
+    el('frag-ops', fragOps);
+}
+
+// ============================================
+// Runtime Handoff Visualization (Section 9)
+// ============================================
+
+function initRuntimeHandoff() {
+    renderHandoffDiagram();
+}
+
+function renderHandoffDiagram() {
+    const beforeSvg = document.getElementById('handoff-before-svg');
+    const afterSvg = document.getElementById('handoff-after-svg');
+    if (!beforeSvg || !afterSvg) return;
+
+    const beforeEntries = [
+        { type: 'Reserved', color: '#ef4444', size: 8 },
+        { type: 'BsCode', color: '#3b82f6', size: 12 },
+        { type: 'BsData', color: '#60a5fa', size: 15 },
+        { type: 'RtCode', color: '#a855f7', size: 8 },
+        { type: 'RtData', color: '#c084fc', size: 6 },
+        { type: 'Conventional', color: '#22c55e', size: 25 },
+        { type: 'ACPI Reclaim', color: '#2dd4bf', size: 5 },
+        { type: 'ACPI NVS', color: '#14b8a6', size: 8 },
+        { type: 'MMIO', color: '#f59e0b', size: 13 }
+    ];
+
+    const afterEntries = [
+        { type: 'Reserved', color: '#ef4444', size: 8 },
+        { type: 'Conventional', color: '#22c55e', size: 27, note: t('handoff.reclaimed') },
+        { type: 'RtCode', color: '#a855f7', size: 8, note: t('handoff.survives') },
+        { type: 'RtData', color: '#c084fc', size: 6, note: t('handoff.survives') },
+        { type: 'Conventional', color: '#22c55e', size: 25 },
+        { type: 'Conventional', color: '#22c55e', size: 5, note: t('handoff.reclaimed') },
+        { type: 'ACPI NVS', color: '#14b8a6', size: 8, note: t('handoff.survives') },
+        { type: 'MMIO', color: '#f59e0b', size: 13 }
+    ];
+
+    function renderVerticalMap(svg, entries) {
+        const total = entries.reduce((s, e) => s + e.size, 0);
+        const mapX = 20, mapW = 360, mapY = 10, mapH = 370;
+        let s = '';
+        let currentY = mapY;
+
+        entries.forEach(entry => {
+            const h = (entry.size / total) * mapH;
+            s += `<rect x="${mapX}" y="${currentY}" width="${mapW}" height="${h}"
+                  fill="${entry.color}" opacity="0.5" stroke="#0f172a" stroke-width="1"/>`;
+            if (h > 18) {
+                s += `<text x="${mapX + 10}" y="${currentY + h/2 + 4}" fill="white" font-size="10" font-weight="600">${entry.type}</text>`;
+                s += `<text x="${mapX + mapW - 10}" y="${currentY + h/2 + 4}" fill="rgba(255,255,255,0.7)" font-size="9" text-anchor="end">${entry.size}%</text>`;
+            }
+            if (entry.note && h > 14) {
+                s += `<text x="${mapX + mapW/2}" y="${currentY + h/2 + 16}" fill="rgba(255,255,255,0.6)" font-size="8" text-anchor="middle" font-style="italic">${entry.note}</text>`;
+            }
+            currentY += h;
+        });
+
+        svg.innerHTML = s;
+    }
+
+    renderVerticalMap(beforeSvg, beforeEntries);
+    renderVerticalMap(afterSvg, afterEntries);
+}
+
+// ============================================
+// Code-to-Visual Linking (Feature 6)
+// ============================================
+
+function initCodeLinking() {
+    document.querySelectorAll('[data-highlight]').forEach(el => {
+        el.classList.add('code-highlight-link');
+        el.addEventListener('mouseenter', () => {
+            const targetId = el.dataset.highlight;
+            const svgEl = document.querySelector(`[data-link-id="${targetId}"]`);
+            if (svgEl) svgEl.classList.add('svg-linked-highlight');
+        });
+        el.addEventListener('mouseleave', () => {
+            document.querySelectorAll('.svg-linked-highlight').forEach(e => e.classList.remove('svg-linked-highlight'));
+        });
+    });
+}
+
+// ============================================
+// Export Toolbar (Feature 7)
+// ============================================
+
+function initExportToolbar() {
+    const toggleBtn = document.getElementById('export-toggle');
+    const dropdown = document.getElementById('export-dropdown');
+    const svgBtn = document.getElementById('export-svg');
+    const pngBtn = document.getElementById('export-png');
+
+    if (!toggleBtn || !dropdown) return;
+
+    toggleBtn.addEventListener('click', () => {
+        dropdown.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.export-toolbar')) {
+            dropdown.classList.add('hidden');
+        }
+    });
+
+    if (svgBtn) {
+        svgBtn.addEventListener('click', () => {
+            const svgEl = findVisibleSvg();
+            if (!svgEl) return;
+
+            navigator.clipboard.writeText(svgEl.outerHTML).then(() => {
+                svgBtn.textContent = t('export.copied');
+                setTimeout(() => { svgBtn.textContent = t('export.copySvg'); }, 2000);
+            });
+            dropdown.classList.add('hidden');
+        });
+    }
+
+    if (pngBtn) {
+        pngBtn.addEventListener('click', () => {
+            const svgEl = findVisibleSvg();
+            if (!svgEl) return;
+
+            const svgData = new XMLSerializer().serializeToString(svgEl);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            img.onload = function () {
+                canvas.width = img.width * 2;
+                canvas.height = img.height * 2;
+                ctx.scale(2, 2);
+                ctx.drawImage(img, 0, 0);
+                URL.revokeObjectURL(url);
+
+                const pngUrl = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = 'uefi-memory-viz.png';
+                link.href = pngUrl;
+                link.click();
+            };
+            img.src = url;
+            dropdown.classList.add('hidden');
+        });
+    }
+}
+
+function findVisibleSvg() {
+    const svgs = document.querySelectorAll('svg[id]');
+    for (const svg of svgs) {
+        const rect = svg.getBoundingClientRect();
+        if (rect.top < window.innerHeight && rect.bottom > 0 && rect.width > 100) {
+            return svg;
+        }
+    }
+    return svgs[0] || null;
 }

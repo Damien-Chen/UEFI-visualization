@@ -143,7 +143,112 @@ const translations = {
         'diagram.freeComplete': '✓ 記憶體釋放完成！減少了記憶體碎片',
         'diagram.returnSuccess': '回傳 EFI_SUCCESS',
         'diagram.verifying': '驗證中: 類型 ✓ 大小 ✓',
-        'diagram.verified': '驗證通過，準備釋放'
+        'diagram.verified': '驗證通過，準備釋放',
+
+        // Navigation (new sections)
+        'nav.poolAllocation': 'Pool 配置',
+        'nav.bootTimeline': '啟動時間線',
+        'nav.policyComparator': '策略比較',
+        'nav.fragmentation': '碎片化',
+        'nav.runtimeHandoff': 'Runtime 交接',
+
+        // Section 5: Pool Allocation
+        'section5.title': '5. Pool 記憶體配置',
+        'section5.1.title': '5.1 AllocatePool 配置流程',
+        'section5.1.desc': '<code>AllocatePool</code> 用於配置小型記憶體區塊。它在已配置的頁面中管理 Pool，使用 <code>POOL_HEAD</code> 結構追蹤每個配置。',
+        'section5.2.title': '5.2 Pool 結構詳解',
+        'pool.step1.title': '步驟 1：接收 Pool 配置請求',
+        'pool.step1.desc': '應用程式呼叫 <code>AllocatePool(EfiBootServicesData, 128, &Buffer)</code><br>請求配置 <strong>128 bytes</strong> 的 Pool 記憶體',
+        'pool.step2.title': '步驟 2：計算所需大小',
+        'pool.step2.desc': '加上 <code>POOL_HEAD</code> 標頭大小 (32 bytes)<br>實際需要：128 + 32 = <strong>160 bytes</strong><br>對齊到最近的 bucket 大小',
+        'pool.step3.title': '步驟 3：搜尋可用的 Pool Page',
+        'pool.step3.desc': '在 <code>mPoolHead</code> 陣列中找到對應類型的 Pool<br>檢查是否有足夠空間的現有 Pool Page',
+        'pool.step4.title': '步驟 4：從 Pool Page 中切割',
+        'pool.step4.desc': '從 Pool Page 的可用空間中切割出請求大小的區塊<br>設定 <code>POOL_HEAD</code> 標頭資訊',
+        'pool.step5.title': '步驟 5：配置完成',
+        'pool.step5.desc': 'Pool 配置成功！<br>回傳指標指向 POOL_HEAD 之後的資料區域<br>回傳 <strong>EFI_SUCCESS</strong>',
+        'pool.structTitle': 'POOL_HEAD 結構',
+        'pool.signature': '簽名',
+        'pool.size': '大小',
+        'pool.type': '類型',
+        'pool.data': '使用者資料區域',
+        'pool.free': '可用空間',
+        'pool.allocated': '已配置',
+        'pool.pageHeader': 'Pool Page (4KB)',
+
+        // Section 6: Boot Timeline
+        'section6.title': '6. 啟動階段記憶體時間線',
+        'section6.1.title': '6.1 記憶體映射演進',
+        'section6.1.desc': '隨著系統啟動，記憶體映射會經歷不同的階段變化。點擊各階段查看該階段的記憶體狀態：',
+        'timeline.sec': 'SEC',
+        'timeline.secDesc': '安全驗證',
+        'timeline.pei': 'PEI',
+        'timeline.peiDesc': '初始化基本記憶體',
+        'timeline.dxe': 'DXE',
+        'timeline.dxeDesc': '驅動執行環境',
+        'timeline.bds': 'BDS',
+        'timeline.bdsDesc': '啟動設備選擇',
+        'timeline.exit': 'ExitBootServices',
+        'timeline.exitDesc': '移交給 OS',
+        'timeline.os': 'OS Runtime',
+        'timeline.osDesc': '作業系統運行',
+        'timeline.mapTitle': '記憶體映射快照',
+
+        // Section 7: Policy Comparator
+        'section7.title': '7. 配置策略比較',
+        'section7.1.title': '7.1 配置演算法比較',
+        'section7.1.desc': '對相同的記憶體佈局和配置請求，不同的演算法會選擇不同的區塊。選擇演算法查看差異：',
+        'policy.firstFit': 'First-Fit',
+        'policy.firstFitDesc': '選擇第一個夠大的區塊',
+        'policy.bestFit': 'Best-Fit',
+        'policy.bestFitDesc': '選擇最小的夠大區塊',
+        'policy.nextFit': 'Next-Fit',
+        'policy.nextFitDesc': '從上次位置繼續搜尋',
+        'policy.request': '配置請求: 4 頁',
+        'policy.selected': '已選擇',
+        'policy.skipped': '跳過',
+        'policy.scanning': '掃描中',
+        'policy.fragAfter': '配置後碎片化:',
+
+        // Section 8: Fragmentation Heatmap
+        'section8.title': '8. 記憶體碎片化視覺化',
+        'section8.1.title': '8.1 碎片化熱力圖',
+        'section8.1.desc': '互動式模擬記憶體配置與釋放，觀察碎片化程度的變化：',
+        'frag.allocate': '配置',
+        'frag.free': '釋放',
+        'frag.reset': '重置',
+        'frag.freeBlocks': '可用區塊數',
+        'frag.largestFree': '最大可用區塊',
+        'frag.fragRatio': '碎片化比率',
+        'frag.totalFree': '總可用空間',
+        'frag.ops': '操作次數',
+        'frag.pages': '頁',
+
+        // Section 9: Runtime Handoff
+        'section9.title': '9. ExitBootServices 記憶體交接',
+        'section9.1.title': '9.1 啟動服務到 Runtime 交接',
+        'section9.1.desc': '當 OS Loader 呼叫 <code>ExitBootServices()</code> 後，Boot Services 記憶體被回收，只有 Runtime 和 ACPI 區域保留：',
+        'handoff.before': 'ExitBootServices 之前',
+        'handoff.after': 'ExitBootServices 之後',
+        'handoff.survives': '保留',
+        'handoff.reclaimed': '回收為可用記憶體',
+        'handoff.bsCode': 'BootServicesCode',
+        'handoff.bsData': 'BootServicesData',
+        'handoff.rtCode': 'RuntimeServicesCode',
+        'handoff.rtData': 'RuntimeServicesData',
+        'handoff.acpiReclaim': 'ACPI Reclaim',
+        'handoff.acpiNvs': 'ACPI NVS',
+        'handoff.conventional': 'Conventional',
+        'handoff.reserved': 'Reserved',
+
+        // Export
+        'export.title': '匯出',
+        'export.copySvg': '複製 SVG',
+        'export.downloadPng': '下載 PNG',
+        'export.copied': '已複製！',
+
+        // Code-to-visual linking
+        'codelink.hover': '懸停程式碼以高亮對應的圖表元素'
     },
     
     'en': {
@@ -288,7 +393,112 @@ const translations = {
         'diagram.freeComplete': '✓ Memory Free Complete! Reduced fragmentation',
         'diagram.returnSuccess': 'Return EFI_SUCCESS',
         'diagram.verifying': 'Verifying: Type ✓ Size ✓',
-        'diagram.verified': 'Verified, ready to free'
+        'diagram.verified': 'Verified, ready to free',
+
+        // Navigation (new sections)
+        'nav.poolAllocation': 'Pool Alloc',
+        'nav.bootTimeline': 'Boot Timeline',
+        'nav.policyComparator': 'Policy Compare',
+        'nav.fragmentation': 'Fragmentation',
+        'nav.runtimeHandoff': 'Runtime Handoff',
+
+        // Section 5: Pool Allocation
+        'section5.title': '5. Pool Memory Allocation',
+        'section5.1.title': '5.1 AllocatePool Process',
+        'section5.1.desc': '<code>AllocatePool</code> is used to allocate small memory blocks. It manages pools within allocated pages, using <code>POOL_HEAD</code> structures to track each allocation.',
+        'section5.2.title': '5.2 Pool Structure Details',
+        'pool.step1.title': 'Step 1: Receive Pool Allocation Request',
+        'pool.step1.desc': 'Application calls <code>AllocatePool(EfiBootServicesData, 128, &Buffer)</code><br>Requesting <strong>128 bytes</strong> of Pool memory',
+        'pool.step2.title': 'Step 2: Calculate Required Size',
+        'pool.step2.desc': 'Add <code>POOL_HEAD</code> header size (32 bytes)<br>Actual need: 128 + 32 = <strong>160 bytes</strong><br>Align to nearest bucket size',
+        'pool.step3.title': 'Step 3: Search for Available Pool Page',
+        'pool.step3.desc': 'Find the corresponding pool in <code>mPoolHead</code> array for this type<br>Check if an existing Pool Page has enough space',
+        'pool.step4.title': 'Step 4: Carve from Pool Page',
+        'pool.step4.desc': 'Carve the requested size from the Pool Page\'s free space<br>Set <code>POOL_HEAD</code> header information',
+        'pool.step5.title': 'Step 5: Allocation Complete',
+        'pool.step5.desc': 'Pool allocation successful!<br>Return pointer to data area after POOL_HEAD<br>Return <strong>EFI_SUCCESS</strong>',
+        'pool.structTitle': 'POOL_HEAD Structure',
+        'pool.signature': 'Signature',
+        'pool.size': 'Size',
+        'pool.type': 'Type',
+        'pool.data': 'User Data Area',
+        'pool.free': 'Free Space',
+        'pool.allocated': 'Allocated',
+        'pool.pageHeader': 'Pool Page (4KB)',
+
+        // Section 6: Boot Timeline
+        'section6.title': '6. Boot Phase Memory Timeline',
+        'section6.1.title': '6.1 Memory Map Evolution',
+        'section6.1.desc': 'As the system boots, the memory map undergoes changes at each phase. Click a phase to see its memory state:',
+        'timeline.sec': 'SEC',
+        'timeline.secDesc': 'Security Verification',
+        'timeline.pei': 'PEI',
+        'timeline.peiDesc': 'Init Basic Memory',
+        'timeline.dxe': 'DXE',
+        'timeline.dxeDesc': 'Driver Execution Env',
+        'timeline.bds': 'BDS',
+        'timeline.bdsDesc': 'Boot Device Select',
+        'timeline.exit': 'ExitBootServices',
+        'timeline.exitDesc': 'Handoff to OS',
+        'timeline.os': 'OS Runtime',
+        'timeline.osDesc': 'OS Running',
+        'timeline.mapTitle': 'Memory Map Snapshot',
+
+        // Section 7: Policy Comparator
+        'section7.title': '7. Allocation Policy Comparison',
+        'section7.1.title': '7.1 Algorithm Comparison',
+        'section7.1.desc': 'For the same memory layout and allocation request, different algorithms select different blocks. Choose an algorithm to see the difference:',
+        'policy.firstFit': 'First-Fit',
+        'policy.firstFitDesc': 'Select first block large enough',
+        'policy.bestFit': 'Best-Fit',
+        'policy.bestFitDesc': 'Select smallest block large enough',
+        'policy.nextFit': 'Next-Fit',
+        'policy.nextFitDesc': 'Continue from last position',
+        'policy.request': 'Allocation Request: 4 Pages',
+        'policy.selected': 'Selected',
+        'policy.skipped': 'Skipped',
+        'policy.scanning': 'Scanning',
+        'policy.fragAfter': 'Fragmentation after:',
+
+        // Section 8: Fragmentation Heatmap
+        'section8.title': '8. Memory Fragmentation Visualization',
+        'section8.1.title': '8.1 Fragmentation Heatmap',
+        'section8.1.desc': 'Interactive simulation of memory allocation and freeing. Observe how fragmentation changes:',
+        'frag.allocate': 'Allocate',
+        'frag.free': 'Free',
+        'frag.reset': 'Reset',
+        'frag.freeBlocks': 'Free Blocks',
+        'frag.largestFree': 'Largest Free Block',
+        'frag.fragRatio': 'Fragmentation Ratio',
+        'frag.totalFree': 'Total Free Space',
+        'frag.ops': 'Operations',
+        'frag.pages': 'Pages',
+
+        // Section 9: Runtime Handoff
+        'section9.title': '9. ExitBootServices Memory Handoff',
+        'section9.1.title': '9.1 Boot Services to Runtime Handoff',
+        'section9.1.desc': 'After the OS Loader calls <code>ExitBootServices()</code>, Boot Services memory is reclaimed. Only Runtime and ACPI regions survive:',
+        'handoff.before': 'Before ExitBootServices',
+        'handoff.after': 'After ExitBootServices',
+        'handoff.survives': 'Survives',
+        'handoff.reclaimed': 'Reclaimed as free memory',
+        'handoff.bsCode': 'BootServicesCode',
+        'handoff.bsData': 'BootServicesData',
+        'handoff.rtCode': 'RuntimeServicesCode',
+        'handoff.rtData': 'RuntimeServicesData',
+        'handoff.acpiReclaim': 'ACPI Reclaim',
+        'handoff.acpiNvs': 'ACPI NVS',
+        'handoff.conventional': 'Conventional',
+        'handoff.reserved': 'Reserved',
+
+        // Export
+        'export.title': 'Export',
+        'export.copySvg': 'Copy SVG',
+        'export.downloadPng': 'Download PNG',
+        'export.copied': 'Copied!',
+
+        // Code-to-visual linking
+        'codelink.hover': 'Hover code to highlight corresponding diagram elements'
     }
 };
 
@@ -328,6 +538,15 @@ function setLanguage(lang) {
     }
     if (typeof renderFreeStep === 'function') {
         renderFreeStep(currentFreeStep);
+    }
+    if (typeof renderPoolStep === 'function') {
+        renderPoolStep(currentPoolStep);
+    }
+    if (typeof renderHandoffDiagram === 'function') {
+        renderHandoffDiagram();
+    }
+    if (typeof renderFragHeatmap === 'function') {
+        renderFragHeatmap();
     }
 }
 
