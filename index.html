@@ -90,6 +90,10 @@
             background: linear-gradient(135deg, #7c4dff 0%, #ff4081 100%);
         }
 
+        .tool-card:nth-child(3) .tool-icon {
+            background: linear-gradient(135deg, #22c55e 0%, #14b8a6 100%);
+        }
+
         .tool-title {
             font-size: 1.5rem;
             font-weight: 600;
@@ -122,6 +126,11 @@
         .tool-card:nth-child(2) .tag {
             background: rgba(124, 77, 255, 0.1);
             color: #b388ff;
+        }
+
+        .tool-card:nth-child(3) .tag {
+            background: rgba(34, 197, 94, 0.12);
+            color: #7ce7c9;
         }
 
         footer {
@@ -214,6 +223,27 @@
                     <span class="tag">HID Usage ID</span>
                     <span class="tag">EFI Key Code</span>
                     <span class="tag">Keyboard Layouts</span>
+                </div>
+                <div class="nav-hint">
+                    <span>Open Tool</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </div>
+            </a>
+
+            <a href="build-viz/index.html" class="tool-card">
+                <div class="tool-icon">🏗️</div>
+                <h2 class="tool-title">EDK2 Build Infrastructure Visualizer</h2>
+                <p class="tool-description">
+                    Visual walkthrough of EDK2 BaseTools build flow, showing how DSC/INF/FDF metadata
+                    are parsed and assembled into FV/FD firmware images.
+                </p>
+                <div class="tool-tags">
+                    <span class="tag">BaseTools</span>
+                    <span class="tag">DSC/INF/FDF</span>
+                    <span class="tag">GenFds</span>
+                    <span class="tag">Firmware Volume</span>
                 </div>
                 <div class="nav-hint">
                     <span>Open Tool</span>

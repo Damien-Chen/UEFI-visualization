@@ -21,6 +21,15 @@ Interactive keyboard viewer showing USB HID Usage IDs and UEFI EDK2 EFI key code
 
 Hover over any key to see its HID Usage ID and corresponding EFI Key code.
 
+### 3. EDK2 Build Infrastructure Visualizer
+Interactive visualization of how EDK2 BaseTools process build metadata into final firmware images:
+- **Build Stages**: Setup, AutoGen, MAKE, ImageGen
+- **Metadata Flow**: `.dsc`, `.inf`, `.dec`, `.fdf`, `Conf/*.txt`
+- **Image Pipeline**: GenSec → GenFfs → GenFv → GenFds
+- **Final Outputs**: FV / FD / Capsule / ROM artifacts
+
+Includes bilingual content (English + Traditional Chinese) and references to official EDK2 Build Specification chapters.
+
 ## Deployment
 
 This project is configured for automatic deployment to GitHub Pages.
@@ -59,6 +68,11 @@ uefi-dev-tools/
 │   ├── styles.css
 │   ├── script.js
 │   └── i18n.js
+├── build-viz/              # EDK2 Build Infrastructure Visualizer
+│   ├── index.html
+│   ├── styles.css
+│   ├── script.js
+│   └── i18n.js
 └── hid-viewer/             # USB HID Key Code Viewer
     ├── index.html
     ├── index.css
@@ -69,6 +83,7 @@ uefi-dev-tools/
 
 - [UEFI Specifications](https://uefi.org/specifications)
 - [EDK2 Source Code](https://github.com/tianocore/edk2)
+- [EDK II Build Specification](https://tianocore-docs.github.io/edk2-BuildSpecification/)
 - [USB HID Usage Tables](https://www.usb.org/hid)
 
 ## License

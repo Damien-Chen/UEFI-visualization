@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDK2 BaseTools Build Flow Visualizer</title>
+    <meta name="description"
+        content="Interactive visualization of EDK2 BaseTools build flow from DSC/INF/FDF to final FV/FD image.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
+</head>
+
+<body>
+    <div class="bg-orb orb-a"></div>
+    <div class="bg-orb orb-b"></div>
+
+    <nav class="top-nav">
+        <div class="brand">
+            <a href="../index.html" class="back-link" data-i18n="nav.back">← Back to Tools</a>
+            <span data-i18n="nav.title">EDK2 Build Infrastructure</span>
+        </div>
+
+        <ul class="nav-links">
+            <li><a class="nav-link active" href="#architecture" data-i18n="nav.architecture">Architecture</a></li>
+            <li><a class="nav-link" href="#flow" data-i18n="nav.flow">Build Flow</a></li>
+            <li><a class="nav-link" href="#journey" data-i18n="nav.journey">DSC/INF/FDF Journey</a></li>
+            <li><a class="nav-link" href="#command" data-i18n="nav.command">Build Command</a></li>
+            <li><a class="nav-link" href="#references" data-i18n="nav.references">References</a></li>
+        </ul>
+
+        <div class="lang-switcher">
+            <button class="lang-btn" data-lang="zh-TW" title="繁體中文">中文</button>
+            <button class="lang-btn" data-lang="en" title="English">EN</button>
+        </div>
+    </nav>
+
+    <main class="page">
+        <header id="architecture" class="section hero">
+            <p class="eyebrow" data-i18n="hero.eyebrow">From Meta-data to Firmware Image</p>
+            <h1 data-i18n="hero.title">How EDK2 BaseTools build .dsc/.inf/.fdf into final FV</h1>
+            <p class="hero-desc" data-i18n="hero.desc">
+                This page visualizes the official EDK II Build Specification flow: AutoGen parses platform meta-data,
+                MAKE stage creates module binaries, and ImageGen assembles FV/FD images through GenSec, GenFfs, GenFv and GenFds.
+            </p>
+
+            <div class="artifact-grid">
+                <article class="artifact-card dsc">
+                    <span class="artifact-ext">.dsc</span>
+                    <h2 data-i18n="artifact.dsc.title">Platform Description</h2>
+                    <p data-i18n="artifact.dsc.desc">Defines active modules, library class mappings, build options, PCD
+                        values and optional FDF path.</p>
+                </article>
+
+                <article class="artifact-card inf">
+                    <span class="artifact-ext">.inf</span>
+                    <h2 data-i18n="artifact.inf.title">Module Description</h2>
+                    <p data-i18n="artifact.inf.desc">Defines sources, packages, library classes, module type, binaries,
+                        and build rules for each module.</p>
+                </article>
+
+                <article class="artifact-card dec">
+                    <span class="artifact-ext">.dec</span>
+                    <h2 data-i18n="artifact.dec.title">Package Declaration</h2>
+                    <p data-i18n="artifact.dec.desc">Provides package includes, GUID/Protocol/PPI declarations and
+                        package-level PCD defaults.</p>
+                </article>
+
+                <article class="artifact-card fdf">
+                    <span class="artifact-ext">.fdf</span>
+                    <h2 data-i18n="artifact.fdf.title">Flash Layout</h2>
+                    <p data-i18n="artifact.fdf.desc">Defines [FV]/[FD]/[Capsule] image layout, FFS placement and flash
+                        region composition.</p>
+                </article>
+
+                <article class="artifact-card conf">
+                    <span class="artifact-ext">Conf/*.txt</span>
+                    <h2 data-i18n="artifact.conf.title">Build Configuration</h2>
+                    <p data-i18n="artifact.conf.desc">target.txt, tools_def.txt and build_rule.txt resolve architecture,
+                        toolchain and tool invocation rules.</p>
+                </article>
+
+                <article class="artifact-card fv">
+                    <span class="artifact-ext">FV / FD</span>
+                    <h2 data-i18n="artifact.fv.title">Firmware Images</h2>
+                    <p data-i18n="artifact.fv.desc">ImageGen packs sections and FFS into firmware volumes (FV), then
+                        combines volumes into final flash device (FD) outputs.</p>
+                </article>
+            </div>
+        </header>
+
+        <section id="flow" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="flow.title">BaseTools pipeline (official 3-stage model)</h2>
+                <p data-i18n="flow.desc">Walk through each step from edksetup/build.exe inputs to final firmware image
+                    artifacts.</p>
+            </div>
+
+            <div class="step-controls">
+                <button id="flow-prev" class="step-btn" disabled data-i18n="btn.prev">← Previous</button>
+                <span id="flow-indicator" class="step-indicator">Step 1 / 8</span>
+                <button id="flow-next" class="step-btn" data-i18n="btn.next">Next →</button>
+                <button id="flow-reset" class="step-btn reset" data-i18n="btn.reset">Reset</button>
+            </div>
+
+            <div id="flow-description" class="step-description">
+                <h3>Step 1</h3>
+                <p>...</p>
+            </div>
+
+            <div class="flow-layout">
+                <div class="flow-diagram-wrap">
+                    <svg id="flow-svg" viewBox="0 0 1120 320" role="img" aria-label="EDK2 BaseTools build flow diagram">
+                        <!-- Rendered by script.js -->
+                    </svg>
+                </div>
+
+                <div class="flow-code">
+                    <h3 data-i18n="flow.codeTitle">Representative command / operation</h3>
+                    <pre id="flow-code-content"></pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="journey" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="journey.title">How .dsc, .inf and .fdf converge into final FV</h2>
+                <p data-i18n="journey.desc">DSC chooses modules and platform policy, INF describes each module, FDF
+                    describes image layout; BaseTools resolves and assembles all of them.</p>
+            </div>
+
+            <div class="journey-grid">
+                <article class="journey-card">
+                    <h3 data-i18n="journey.diagramTitle">Dependency and ownership map</h3>
+                    <svg class="journey-svg" viewBox="0 0 920 330" role="img"
+                        aria-label="DSC INF FDF relationship diagram">
+                        <defs>
+                            <marker id="mini-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                                <path d="M0,0 L0,6 L6,3 z" fill="#31b89f"></path>
+                            </marker>
+                        </defs>
+
+                        <rect x="40" y="40" width="190" height="86" rx="12" class="box dsc"></rect>
+                        <text x="135" y="72" class="box-title">.dsc</text>
+                        <text x="135" y="96" class="box-desc" data-i18n="journey.boxDsc">Platform policy</text>
+
+                        <rect x="280" y="40" width="190" height="86" rx="12" class="box inf"></rect>
+                        <text x="375" y="72" class="box-title">.inf</text>
+                        <text x="375" y="96" class="box-desc" data-i18n="journey.boxInf">Module recipe</text>
+
+                        <rect x="520" y="40" width="190" height="86" rx="12" class="box dec"></rect>
+                        <text x="615" y="72" class="box-title">.dec</text>
+                        <text x="615" y="96" class="box-desc" data-i18n="journey.boxDec">Package metadata</text>
+
+                        <rect x="760" y="40" width="120" height="86" rx="12" class="box conf"></rect>
+                        <text x="820" y="72" class="box-title">Conf</text>
+                        <text x="820" y="96" class="box-desc" data-i18n="journey.boxConf">Build knobs</text>
+
+                        <rect x="160" y="190" width="220" height="96" rx="12" class="box autogen"></rect>
+                        <text x="270" y="224" class="box-title" data-i18n="journey.boxAutoGenTitle">AutoGen +
+                            Makefiles</text>
+                        <text x="270" y="250" class="box-desc" data-i18n="journey.boxAutoGenDesc">Resolve libs,
+                            PCDs, build graph</text>
+
+                        <rect x="430" y="190" width="220" height="96" rx="12" class="box make"></rect>
+                        <text x="540" y="224" class="box-title" data-i18n="journey.boxMakeTitle">MAKE stage</text>
+                        <text x="540" y="250" class="box-desc" data-i18n="journey.boxMakeDesc">Compile / link into
+                            .efi</text>
+
+                        <rect x="700" y="190" width="180" height="96" rx="12" class="box imagegen"></rect>
+                        <text x="790" y="224" class="box-title" data-i18n="journey.boxImageGenTitle">GenFds
+                            orchestration</text>
+                        <text x="790" y="250" class="box-desc" data-i18n="journey.boxImageGenDesc">GenSec → GenFfs
+                            → GenFv</text>
+
+                        <path d="M 230 83 L 272 83" class="journey-arrow"></path>
+                        <path d="M 470 83 L 512 83" class="journey-arrow"></path>
+                        <path d="M 710 83 L 752 83" class="journey-arrow"></path>
+
+                        <path d="M 140 126 L 220 186" class="journey-arrow"></path>
+                        <path d="M 365 126 L 290 186" class="journey-arrow"></path>
+                        <path d="M 615 126 L 330 186" class="journey-arrow"></path>
+                        <path d="M 820 126 L 355 186" class="journey-arrow"></path>
+
+                        <path d="M 380 238 L 422 238" class="journey-arrow"></path>
+                        <path d="M 650 238 L 692 238" class="journey-arrow"></path>
+
+                        <text x="872" y="304" class="final-label" data-i18n="journey.final">Final FV / FD / Capsule</text>
+                    </svg>
+                </article>
+
+                <article class="journey-card">
+                    <h3 data-i18n="journey.tableTitle">Stage input/output matrix</h3>
+                    <div class="table-scroll">
+                        <table class="artifact-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="journey.table.stage">Stage</th>
+                                    <th data-i18n="journey.table.input">Primary input</th>
+                                    <th data-i18n="journey.table.output">Primary output</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td data-i18n="journey.row.setup.stage">Env setup</td>
+                                    <td data-i18n="journey.row.setup.input">WORKSPACE, EDK_TOOLS_PATH, Conf/target.txt</td>
+                                    <td data-i18n="journey.row.setup.output">Active platform/toolchain/arch context</td>
+                                </tr>
+                                <tr>
+                                    <td data-i18n="journey.row.autogen.stage">AutoGen parse</td>
+                                    <td data-i18n="journey.row.autogen.input">DSC + INF + DEC + FDF(+PCD)</td>
+                                    <td data-i18n="journey.row.autogen.output">AutoGen.c/h, module makefiles, AsBuilt INF</td>
+                                </tr>
+                                <tr>
+                                    <td data-i18n="journey.row.make.stage">MAKE stage</td>
+                                    <td data-i18n="journey.row.make.input">Makefiles + sources + tool defs</td>
+                                    <td data-i18n="journey.row.make.output">PE/COFF and .efi module binaries</td>
+                                </tr>
+                                <tr>
+                                    <td data-i18n="journey.row.image.stage">ImageGen stage</td>
+                                    <td data-i18n="journey.row.image.input">.efi + FDF [FV]/[FD] layout rules</td>
+                                    <td data-i18n="journey.row.image.output">.sec/.ffs/.fv and final .fd image</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section id="command" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="command.title">Build command builder</h2>
+                <p data-i18n="command.desc">Compose a practical build command and see how options map to the flow.</p>
+            </div>
+
+            <div class="cmd-grid">
+                <label>
+                    <span data-i18n="command.platform">Platform DSC</span>
+                    <input id="platform-input" type="text" value="OvmfPkg/OvmfPkgX64.dsc">
+                </label>
+
+                <label>
+                    <span data-i18n="command.arch">Architecture</span>
+                    <select id="arch-select">
+                        <option value="X64">X64</option>
+                        <option value="IA32">IA32</option>
+                        <option value="AARCH64">AARCH64</option>
+                        <option value="ARM">ARM</option>
+                    </select>
+                </label>
+
+                <label>
+                    <span data-i18n="command.target">Build target</span>
+                    <select id="target-select">
+                        <option value="DEBUG">DEBUG</option>
+                        <option value="RELEASE">RELEASE</option>
+                        <option value="NOOPT">NOOPT</option>
+                    </select>
+                </label>
+
+                <label>
+                    <span data-i18n="command.toolchain">Toolchain tag</span>
+                    <select id="toolchain-select">
+                        <option value="GCC5">GCC5</option>
+                        <option value="VS2022">VS2022</option>
+                        <option value="CLANGPDB">CLANGPDB</option>
+                    </select>
+                </label>
+
+                <label>
+                    <span data-i18n="command.mode">Build mode</span>
+                    <select id="mode-select">
+                        <option value="platform" data-i18n="command.modePlatform">Platform</option>
+                        <option value="module" data-i18n="command.modeModule">Single module</option>
+                    </select>
+                </label>
+
+                <label id="module-field" class="hidden">
+                    <span data-i18n="command.modulePath">Module INF</span>
+                    <input id="module-input" type="text"
+                        value="MdeModulePkg/Application/HelloWorld/HelloWorld.inf">
+                </label>
+
+                <label>
+                    <span data-i18n="command.fdfPath">FDF override</span>
+                    <input id="fdf-input" type="text" value="OvmfPkg/OvmfPkg.fdf">
+                </label>
+
+                <label class="checkline">
+                    <input id="fdf-enable" type="checkbox" checked>
+                    <span data-i18n="command.useFdf">Enable -f (FDF override)</span>
+                </label>
+
+                <label class="checkline">
+                    <input id="fds-enable" type="checkbox" checked>
+                    <span data-i18n="command.fdsTarget">Append fds target (invoke ImageGen/GenFds)</span>
+                </label>
+            </div>
+
+            <pre id="build-command-output" class="command-output"></pre>
+
+            <div class="command-notes">
+                <h3 data-i18n="command.notesTitle">Why these options matter</h3>
+                <ul>
+                    <li data-i18n="command.note1">-p selects the platform DSC graph (modules, library mapping,
+                        platform PCD policy).</li>
+                    <li data-i18n="command.note2">-a/-b/-t choose architecture, target and toolchain; command line
+                        overrides target.txt.</li>
+                    <li data-i18n="command.note3">-f can override FDF from DSC; fds target drives GenFds image
+                        generation.</li>
+                    <li data-i18n="command.note4">-m switches to single-module build while still using platform
+                        context.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="references" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="references.title">Checked official EDK2 docs for this visualization</h2>
+                <p data-i18n="references.desc">The flow and terminology on this page are based on the following
+                    specification chapters.</p>
+            </div>
+
+            <ul class="refs-list">
+                <li>
+                    <a href="https://tianocore-docs.github.io/edk2-BuildSpecification/release-1.28/4_edk_ii_build_process_overview/42_build_process_overview.html"
+                        target="_blank" rel="noopener noreferrer">4.2 Build Process Overview</a>
+                    <p data-i18n="references.r1">Defines the three major stages: AutoGen, MAKE, and ImageGen.</p>
+                </li>
+                <li>
+                    <a href="https://tianocore-docs.github.io/edk2-BuildSpecification/draft/8_pre-build_autogen_stage/82_auto-generation_process.html"
+                        target="_blank" rel="noopener noreferrer">8.2 Auto-generation Process</a>
+                    <p data-i18n="references.r2">Details parsing of DSC/FDF/INF/DEC, library and PCD precedence,
+                        AutoGen and makefile generation.</p>
+                </li>
+                <li>
+                    <a href="https://tianocore-docs.github.io/edk2-BuildSpecification/draft/10_post-build_imagegen_stage_-_flash/"
+                        target="_blank" rel="noopener noreferrer">10 Post-build ImageGen Stage</a>
+                    <p data-i18n="references.r3">Documents conversion path .efi → section → FFS → FV → FD and the
+                        role of GenFds.</p>
+                </li>
+                <li>
+                    <a href="https://tianocore-docs.github.io/edk2-BuildSpecification/draft/10_post-build_imagegen_stage_-_flash/101_overview_of_flash_device_layout.html"
+                        target="_blank" rel="noopener noreferrer">10.1 Overview of Flash Device Layout</a>
+                    <p data-i18n="references.r4">Shows GenFds invocation and its sub-tools: GenSec, GenFfs, GenFv,
+                        GenFw, GenVtf.</p>
+                </li>
+                <li>
+                    <a href="https://tianocore-docs.github.io/edk2-BuildSpecification/draft/10_post-build_imagegen_stage_-_flash/104_create_the_fv_image_files.html"
+                        target="_blank" rel="noopener noreferrer">10.4 Create the FV Image File(s)</a>
+                    <p data-i18n="references.r5">Explains how [FV] entries in FDF drive FV composition and generated
+                        FV INF consumed by GenFv.</p>
+                </li>
+                <li>
+                    <a href="https://tianocore-docs.github.io/edk2-BuildSpecification/release-1.28/appendix_d_buildexe_command/d4_usage.html"
+                        target="_blank" rel="noopener noreferrer">Appendix D.4 build.exe Usage</a>
+                    <p data-i18n="references.r6">Covers practical command-line options like -p/-m/-a/-b/-t/-f/-D and
+                        --pcd.</p>
+                </li>
+            </ul>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p data-i18n="footer.text">EDK2 BaseTools Build Flow Visualization | Educational purpose</p>
+    </footer>
+
+    <script src="script.js" defer></script>
+</body>
+
+</html>
