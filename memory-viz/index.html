@@ -20,6 +20,7 @@
             <li><a href="#deallocation" class="nav-link" data-i18n="nav.deallocation">記憶體釋放</a></li>
             <li><a href="#pool-allocation" class="nav-link" data-i18n="nav.poolAllocation">Pool 配置</a></li>
             <li><a href="#boot-timeline" class="nav-link" data-i18n="nav.bootTimeline">啟動時間線</a></li>
+            <li><a href="#s4-resume" class="nav-link" data-i18n="nav.s4resume">S4 Resume</a></li>
             <li><a href="#policy-comparator" class="nav-link" data-i18n="nav.policyComparator">策略比較</a></li>
             <li><a href="#fragmentation-heatmap" class="nav-link" data-i18n="nav.fragmentation">碎片化</a></li>
             <li><a href="#runtime-handoff" class="nav-link" data-i18n="nav.runtimeHandoff">Runtime 交接</a></li>
@@ -727,12 +728,53 @@ typedef struct {
             </div>
         </section>
 
-        <!-- Section 7: Policy Comparator -->
-        <section id="policy-comparator" class="section">
-            <h1 data-i18n="section7.title">7. 配置策略比較</h1>
+        <!-- Section 7: S4 Resume Memory Map -->
+        <section id="s4-resume" class="section">
+            <h1 data-i18n="section7.title">7. S4 復甦記憶體映射</h1>
             
             <div class="subsection">
-                <h2 data-i18n="section7.1.title">7.1 配置演算法比較</h2>
+                <h2 data-i18n="section7.1.title">7.1 S4 復甦階段記憶體映射</h2>
+                <p class="description" data-i18n="section7.1.desc">
+                    點擊各階段，查看系統從休眠喚醒到重新交還給 OS 的記憶體狀態與映射變化。
+                </p>
+
+                <div class="timeline-bar s4">
+                    <button class="timeline-phase active" data-s4phase="wake">
+                        <span class="phase-name" data-i18n="s4.wake">喚醒向量</span>
+                        <span class="phase-desc" data-i18n="s4.wakeDesc">CPU 從 S4 喚醒</span>
+                    </button>
+                    <div class="timeline-connector"></div>
+                    <button class="timeline-phase" data-s4phase="firmware">
+                        <span class="phase-name" data-i18n="s4.firmware">韌體復原</span>
+                        <span class="phase-desc" data-i18n="s4.firmwareDesc">恢復引導環境</span>
+                    </button>
+                    <div class="timeline-connector"></div>
+                    <button class="timeline-phase" data-s4phase="remap">
+                        <span class="phase-name" data-i18n="s4.remap">映射重建</span>
+                        <span class="phase-desc" data-i18n="s4.remapDesc">重建頁表/Runtime</span>
+                    </button>
+                    <div class="timeline-connector"></div>
+                    <button class="timeline-phase" data-s4phase="handoff">
+                        <span class="phase-name" data-i18n="s4.handoff">OS 交接</span>
+                        <span class="phase-desc" data-i18n="s4.handoffDesc">恢復 OS 狀態</span>
+                    </button>
+                </div>
+
+                <div class="diagram-container">
+                    <h3 data-i18n="s4.mapTitle">S4 復甦記憶體映射快照</h3>
+                    <div id="s4-map" class="timeline-map-container">
+                        <svg viewBox="0 0 900 300" id="s4-svg"></svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 8: Policy Comparator -->
+        <section id="policy-comparator" class="section">
+            <h1 data-i18n="section8.title">8. 配置策略比較</h1>
+            
+            <div class="subsection">
+                <h2 data-i18n="section8.1.title">8.1 配置演算法比較</h2>
                 <p class="description" data-i18n="section7.1.desc">
                     對相同的記憶體佈局和配置請求，不同的演算法會選擇不同的區塊。選擇演算法查看差異：
                 </p>
@@ -753,12 +795,12 @@ typedef struct {
             </div>
         </section>
 
-        <!-- Section 8: Fragmentation Heatmap -->
+        <!-- Section 9: Fragmentation Heatmap -->
         <section id="fragmentation-heatmap" class="section">
-            <h1 data-i18n="section8.title">8. 記憶體碎片化視覺化</h1>
+            <h1 data-i18n="section9.title">9. 記憶體碎片化視覺化</h1>
             
             <div class="subsection">
-                <h2 data-i18n="section8.1.title">8.1 碎片化熱力圖</h2>
+                <h2 data-i18n="section9.1.title">9.1 碎片化熱力圖</h2>
                 <p class="description" data-i18n="section8.1.desc">
                     互動式模擬記憶體配置與釋放，觀察碎片化程度的變化：
                 </p>
@@ -799,12 +841,12 @@ typedef struct {
             </div>
         </section>
 
-        <!-- Section 9: Runtime Handoff -->
+        <!-- Section 10: Runtime Handoff -->
         <section id="runtime-handoff" class="section">
-            <h1 data-i18n="section9.title">9. ExitBootServices 記憶體交接</h1>
+            <h1 data-i18n="section10.title">10. ExitBootServices 記憶體交接</h1>
             
             <div class="subsection">
-                <h2 data-i18n="section9.1.title">9.1 啟動服務到 Runtime 交接</h2>
+                <h2 data-i18n="section10.1.title">10.1 啟動服務到 Runtime 交接</h2>
                 <p class="description" data-i18n="section9.1.desc">
                     當 OS Loader 呼叫 <code>ExitBootServices()</code> 後，Boot Services 記憶體被回收，只有 Runtime 和 ACPI 區域保留：
                 </p>

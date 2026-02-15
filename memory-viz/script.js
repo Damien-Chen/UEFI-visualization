@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initDeallocationVisualization();
     initPoolVisualization();
     initTimelineVisualization();
+    initS4ResumeVisualization();
     initPolicyComparator();
     initFragmentationHeatmap();
     initRuntimeHandoff();
@@ -1000,6 +1001,110 @@ function renderTimelineMap(phase) {
     let s = '';
 
     s += `<text x="${barX + barW/2}" y="25" fill="#94a3b8" font-size="13" text-anchor="middle" font-weight="600">${phase.toUpperCase()} Phase Memory Map</text>`;
+
+    data.entries.forEach(entry => {
+        const x = barX + (entry.start / 100) * barW;
+        const w = (entry.size / 100) * barW;
+        s += `<rect x="${x}" y="${barY}" width="${w}" height="${barH}" fill="${entry.color}" opacity="0.7" stroke="#0f172a" stroke-width="1"/>`;
+        if (w > 50) {
+            s += `<text x="${x + w/2}" y="${barY + barH/2 - 5}" fill="white" font-size="10" text-anchor="middle" font-weight="600">${entry.type}</text>`;
+            s += `<text x="${x + w/2}" y="${barY + barH/2 + 12}" fill="rgba(255,255,255,0.7)" font-size="9" text-anchor="middle">${entry.size}%</text>`;
+        }
+    });
+
+    s += `<text x="${barX}" y="${barY + barH + 20}" fill="#64748b" font-size="9">0x00000000</text>`;
+    s += `<text x="${barX + barW}" y="${barY + barH + 20}" fill="#64748b" font-size="9" text-anchor="end">0xFFFFFFFF</text>`;
+    s += `<text x="${barX + barW/2}" y="${barY + barH + 20}" fill="#64748b" font-size="9" text-anchor="middle">Address Space</text>`;
+
+    const legendTypes = [...new Set(data.entries.map(e => e.type))];
+    const legendY = barY + barH + 40;
+    legendTypes.forEach((type, i) => {
+        const lx = barX + (i % 5) * 170;
+        const ly = legendY + Math.floor(i / 5) * 20;
+        const entry = data.entries.find(e => e.type === type);
+        s += `<rect x="${lx}" y="${ly}" width="12" height="12" rx="2" fill="${entry.color}" opacity="0.7"/>`;
+        s += `<text x="${lx + 18}" y="${ly + 10}" fill="#94a3b8" font-size="10">${type}</text>`;
+    });
+
+    svg.innerHTML = s;
+}
+
+// ============================================
+// S4 Resume Memory Map (Section 7)
+// ============================================
+
+function getS4Phases() {
+    return {
+        wake: {
+            entries: [
+                { type: 'Reserved', start: 0, size: 5, color: '#ef4444' },
+                { type: 'ACPI NVS', start: 5, size: 15, color: '#14b8a6' },
+                { type: 'LoaderCode', start: 20, size: 10, color: '#f97316' },
+                { type: 'MMIO', start: 30, size: 10, color: '#f59e0b' },
+                { type: 'Uninitialized', start: 40, size: 60, color: '#475569' }
+            ]
+        },
+        firmware: {
+            entries: [
+                { type: 'Reserved', start: 0, size: 5, color: '#ef4444' },
+                { type: 'ACPI NVS', start: 5, size: 15, color: '#14b8a6' },
+                { type: 'BsCode', start: 20, size: 12, color: '#3b82f6' },
+                { type: 'BsData', start: 32, size: 12, color: '#60a5fa' },
+                { type: 'MMIO', start: 44, size: 12, color: '#f59e0b' },
+                { type: 'Conventional', start: 56, size: 39, color: '#22c55e' }
+            ]
+        },
+        remap: {
+            entries: [
+                { type: 'Reserved', start: 0, size: 5, color: '#ef4444' },
+                { type: 'ACPI NVS', start: 5, size: 15, color: '#14b8a6' },
+                { type: 'RtCode', start: 20, size: 8, color: '#a855f7' },
+                { type: 'RtData', start: 28, size: 8, color: '#c084fc' },
+                { type: 'BsCode', start: 36, size: 8, color: '#3b82f6' },
+                { type: 'BsData', start: 44, size: 8, color: '#60a5fa' },
+                { type: 'MMIO', start: 52, size: 12, color: '#f59e0b' },
+                { type: 'Conventional', start: 64, size: 36, color: '#22c55e' }
+            ]
+        },
+        handoff: {
+            entries: [
+                { type: 'Reserved', start: 0, size: 7, color: '#ef4444' },
+                { type: 'ACPI NVS', start: 7, size: 15, color: '#14b8a6' },
+                { type: 'RtCode', start: 22, size: 8, color: '#a855f7' },
+                { type: 'RtData', start: 30, size: 8, color: '#c084fc' },
+                { type: 'OS Managed', start: 38, size: 50, color: '#22c55e' },
+                { type: 'MMIO', start: 88, size: 12, color: '#f59e0b' }
+            ]
+        }
+    };
+}
+
+function initS4ResumeVisualization() {
+    const phases = document.querySelectorAll('.timeline-bar.s4 .timeline-phase');
+    if (!phases.length) return;
+
+    phases.forEach(btn => {
+        btn.addEventListener('click', () => {
+            phases.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderS4Map(btn.dataset.s4phase);
+        });
+    });
+
+    renderS4Map('wake');
+}
+
+function renderS4Map(phase) {
+    const svg = document.getElementById('s4-svg');
+    if (!svg) return;
+    const data = getS4Phases()[phase];
+    if (!data) return;
+
+    const barY = 40, barH = 60, barX = 50, barW = 800;
+    let s = '';
+
+    const phaseLabel = (phase || '').toUpperCase();
+    s += `<text x="${barX + barW/2}" y="25" fill="#94a3b8" font-size="13" text-anchor="middle" font-weight="600">S4 ${phaseLabel} Memory Map</text>`;
 
     data.entries.forEach(entry => {
         const x = barX + (entry.start / 100) * barW;

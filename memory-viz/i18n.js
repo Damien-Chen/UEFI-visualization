@@ -148,6 +148,7 @@ const translations = {
         // Navigation (new sections)
         'nav.poolAllocation': 'Pool 配置',
         'nav.bootTimeline': '啟動時間線',
+        'nav.s4resume': 'S4 復甦',
         'nav.policyComparator': '策略比較',
         'nav.fragmentation': '碎片化',
         'nav.runtimeHandoff': 'Runtime 交接',
@@ -194,10 +195,24 @@ const translations = {
         'timeline.osDesc': '作業系統運行',
         'timeline.mapTitle': '記憶體映射快照',
 
-        // Section 7: Policy Comparator
-        'section7.title': '7. 配置策略比較',
-        'section7.1.title': '7.1 配置演算法比較',
-        'section7.1.desc': '對相同的記憶體佈局和配置請求，不同的演算法會選擇不同的區塊。選擇演算法查看差異：',
+        // Section 7: S4 Resume Memory Map
+        'section7.title': '7. S4 復甦記憶體映射',
+        'section7.1.title': '7.1 S4 復甦階段記憶體映射',
+        'section7.1.desc': '點擊各階段，查看系統從休眠喚醒到重新交還給 OS 的記憶體狀態與映射變化。',
+        's4.wake': '喚醒向量',
+        's4.wakeDesc': 'CPU 從 S4 喚醒',
+        's4.firmware': '韌體復原',
+        's4.firmwareDesc': '恢復引導環境',
+        's4.remap': '映射重建',
+        's4.remapDesc': '重建頁表/Runtime',
+        's4.handoff': 'OS 交接',
+        's4.handoffDesc': '恢復 OS 狀態',
+        's4.mapTitle': 'S4 復甦記憶體映射快照',
+
+        // Section 8: Policy Comparator
+        'section8.title': '8. 配置策略比較',
+        'section8.1.title': '8.1 配置演算法比較',
+        'section8.1.desc': '對相同的記憶體佈局和配置請求，不同的演算法會選擇不同的區塊。選擇演算法查看差異：',
         'policy.firstFit': 'First-Fit',
         'policy.firstFitDesc': '選擇第一個夠大的區塊',
         'policy.bestFit': 'Best-Fit',
@@ -210,10 +225,10 @@ const translations = {
         'policy.scanning': '掃描中',
         'policy.fragAfter': '配置後碎片化:',
 
-        // Section 8: Fragmentation Heatmap
-        'section8.title': '8. 記憶體碎片化視覺化',
-        'section8.1.title': '8.1 碎片化熱力圖',
-        'section8.1.desc': '互動式模擬記憶體配置與釋放，觀察碎片化程度的變化：',
+        // Section 9: Fragmentation Heatmap
+        'section9.title': '9. 記憶體碎片化視覺化',
+        'section9.1.title': '9.1 碎片化熱力圖',
+        'section9.1.desc': '互動式模擬記憶體配置與釋放，觀察碎片化程度的變化：',
         'frag.allocate': '配置',
         'frag.free': '釋放',
         'frag.reset': '重置',
@@ -224,10 +239,10 @@ const translations = {
         'frag.ops': '操作次數',
         'frag.pages': '頁',
 
-        // Section 9: Runtime Handoff
-        'section9.title': '9. ExitBootServices 記憶體交接',
-        'section9.1.title': '9.1 啟動服務到 Runtime 交接',
-        'section9.1.desc': '當 OS Loader 呼叫 <code>ExitBootServices()</code> 後，Boot Services 記憶體被回收，只有 Runtime 和 ACPI 區域保留：',
+        // Section 10: Runtime Handoff
+        'section10.title': '10. ExitBootServices 記憶體交接',
+        'section10.1.title': '10.1 啟動服務到 Runtime 交接',
+        'section10.1.desc': '當 OS Loader 呼叫 <code>ExitBootServices()</code> 後，Boot Services 記憶體被回收，只有 Runtime 和 ACPI 區域保留：',
         'handoff.before': 'ExitBootServices 之前',
         'handoff.after': 'ExitBootServices 之後',
         'handoff.survives': '保留',
@@ -398,6 +413,7 @@ const translations = {
         // Navigation (new sections)
         'nav.poolAllocation': 'Pool Alloc',
         'nav.bootTimeline': 'Boot Timeline',
+        'nav.s4resume': 'S4 Resume',
         'nav.policyComparator': 'Policy Compare',
         'nav.fragmentation': 'Fragmentation',
         'nav.runtimeHandoff': 'Runtime Handoff',
@@ -444,10 +460,24 @@ const translations = {
         'timeline.osDesc': 'OS Running',
         'timeline.mapTitle': 'Memory Map Snapshot',
 
-        // Section 7: Policy Comparator
-        'section7.title': '7. Allocation Policy Comparison',
-        'section7.1.title': '7.1 Algorithm Comparison',
-        'section7.1.desc': 'For the same memory layout and allocation request, different algorithms select different blocks. Choose an algorithm to see the difference:',
+        // Section 7: S4 Resume Memory Map
+        'section7.title': '7. S4 Resume Memory Map',
+        'section7.1.title': '7.1 S4 Resume Phase Memory States',
+        'section7.1.desc': 'Click each phase to see how memory looks as the system wakes from S4 and hands control back to the OS.',
+        's4.wake': 'Wake Vector',
+        's4.wakeDesc': 'CPU wake from S4',
+        's4.firmware': 'Firmware Restore',
+        's4.firmwareDesc': 'Rehydrate boot environment',
+        's4.remap': 'Remap & Runtime',
+        's4.remapDesc': 'Rebuild page tables / runtime map',
+        's4.handoff': 'OS Handoff',
+        's4.handoffDesc': 'Restore OS context',
+        's4.mapTitle': 'S4 Resume Memory Map Snapshot',
+
+        // Section 8: Policy Comparator
+        'section8.title': '8. Allocation Policy Comparison',
+        'section8.1.title': '8.1 Algorithm Comparison',
+        'section8.1.desc': 'For the same memory layout and allocation request, different algorithms select different blocks. Choose an algorithm to see the difference:',
         'policy.firstFit': 'First-Fit',
         'policy.firstFitDesc': 'Select first block large enough',
         'policy.bestFit': 'Best-Fit',
@@ -460,10 +490,10 @@ const translations = {
         'policy.scanning': 'Scanning',
         'policy.fragAfter': 'Fragmentation after:',
 
-        // Section 8: Fragmentation Heatmap
-        'section8.title': '8. Memory Fragmentation Visualization',
-        'section8.1.title': '8.1 Fragmentation Heatmap',
-        'section8.1.desc': 'Interactive simulation of memory allocation and freeing. Observe how fragmentation changes:',
+        // Section 9: Fragmentation Heatmap
+        'section9.title': '9. Memory Fragmentation Visualization',
+        'section9.1.title': '9.1 Fragmentation Heatmap',
+        'section9.1.desc': 'Interactive simulation of memory allocation and freeing. Observe how fragmentation changes:',
         'frag.allocate': 'Allocate',
         'frag.free': 'Free',
         'frag.reset': 'Reset',
@@ -474,10 +504,10 @@ const translations = {
         'frag.ops': 'Operations',
         'frag.pages': 'Pages',
 
-        // Section 9: Runtime Handoff
-        'section9.title': '9. ExitBootServices Memory Handoff',
-        'section9.1.title': '9.1 Boot Services to Runtime Handoff',
-        'section9.1.desc': 'After the OS Loader calls <code>ExitBootServices()</code>, Boot Services memory is reclaimed. Only Runtime and ACPI regions survive:',
+        // Section 10: Runtime Handoff
+        'section10.title': '10. ExitBootServices Memory Handoff',
+        'section10.1.title': '10.1 Boot Services to Runtime Handoff',
+        'section10.1.desc': 'After the OS Loader calls <code>ExitBootServices()</code>, Boot Services memory is reclaimed. Only Runtime and ACPI regions survive:',
         'handoff.before': 'Before ExitBootServices',
         'handoff.after': 'After ExitBootServices',
         'handoff.survives': 'Survives',
