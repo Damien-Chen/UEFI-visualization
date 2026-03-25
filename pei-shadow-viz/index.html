@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PEI Shadow Process Visualization</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ambient background orbs -->
+<div class="bg-orb orb-a"></div>
+<div class="bg-orb orb-b"></div>
+
+<!-- ===== top navigation ===== -->
+<nav class="top-nav">
+    <a href="../index.html" class="back-link" data-i18n="nav.back">&larr; Back to Tools</a>
+    <div class="nav-links">
+        <a href="#overview"     class="nav-link active" data-i18n="nav.overview">Overview</a>
+        <a href="#architecture" class="nav-link" data-i18n="nav.architecture">Architecture</a>
+        <a href="#flow"         class="nav-link" data-i18n="nav.flow">Shadow Flow</a>
+        <a href="#fixup"        class="nav-link" data-i18n="nav.fixup">Pointer Fixup</a>
+        <a href="#code"         class="nav-link" data-i18n="nav.code">Code</a>
+        <a href="#references"   class="nav-link" data-i18n="nav.references">References</a>
+    </div>
+    <div class="lang-switcher">
+        <button class="lang-btn" data-lang="zh-TW" title="繁體中文">中文</button>
+        <button class="lang-btn" data-lang="en"    title="English">EN</button>
+    </div>
+</nav>
+
+<!-- ========================================================= -->
+<!-- SECTION : Overview                                        -->
+<!-- ========================================================= -->
+<section id="overview" class="section hero">
+    <h1 data-i18n="overview.title">PEI Shadow Process Overview</h1>
+    <p class="section-subtitle" data-i18n="overview.subtitle">Understanding the PEI Core migration from Flash to RAM</p>
+
+    <!-- boot-phase timeline -->
+    <div class="phase-timeline">
+        <div class="phase-item sec">  <span data-i18n="phase.sec">SEC Phase</span></div>
+        <div class="phase-arrow">&rarr;</div>
+        <div class="phase-item pei-pre"><span data-i18n="phase.pei.pre">PEI (Pre-Memory)</span></div>
+        <div class="phase-arrow">&rarr;</div>
+        <div class="phase-item shadow highlight"><span data-i18n="phase.shadow">Shadow Transition</span></div>
+        <div class="phase-arrow">&rarr;</div>
+        <div class="phase-item pei-post"><span data-i18n="phase.pei.post">PEI (Post-Memory)</span></div>
+        <div class="phase-arrow">&rarr;</div>
+        <div class="phase-item dxe"><span data-i18n="phase.dxe">DXE Phase</span></div>
+    </div>
+
+    <!-- three info cards -->
+    <div class="info-grid">
+        <div class="info-card">
+            <div class="info-icon flash-icon">F</div>
+            <h3 data-i18n="overview.what.title">What is PEI Shadow?</h3>
+            <p  data-i18n="overview.what.desc"></p>
+        </div>
+        <div class="info-card">
+            <div class="info-icon car-icon">C</div>
+            <h3 data-i18n="overview.why.title">Why Shadow?</h3>
+            <p  data-i18n="overview.why.desc"></p>
+        </div>
+        <div class="info-card">
+            <div class="info-icon dram-icon">D</div>
+            <h3 data-i18n="overview.when.title">When Does Shadow Happen?</h3>
+            <p  data-i18n="overview.when.desc"></p>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : Memory Architecture                             -->
+<!-- ========================================================= -->
+<section id="architecture" class="section panel">
+    <h2 data-i18n="arch.title">Memory Architecture</h2>
+    <p class="section-subtitle" data-i18n="arch.subtitle">The three memory regions involved in the PEI phase</p>
+
+    <div id="arch-diagram" class="diagram-container"></div>
+
+    <div class="arch-cards">
+        <div class="arch-card flash-card">
+            <h3 data-i18n="arch.flash.title">Flash ROM</h3>
+            <p  data-i18n="arch.flash.desc"></p>
+        </div>
+        <div class="arch-card car-card">
+            <h3 data-i18n="arch.car.title">Cache as RAM (CAR)</h3>
+            <p  data-i18n="arch.car.desc"></p>
+        </div>
+        <div class="arch-card dram-card">
+            <h3 data-i18n="arch.dram.title">Permanent Memory (DRAM)</h3>
+            <p  data-i18n="arch.dram.desc"></p>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : Shadow Flow (interactive step-by-step)          -->
+<!-- ========================================================= -->
+<section id="flow" class="section panel">
+    <h2 data-i18n="flow.title">Shadow Flow</h2>
+    <p class="section-subtitle" data-i18n="flow.subtitle">Step-by-step walkthrough of the PEI Shadow process</p>
+
+    <div class="step-controls">
+        <button id="flow-prev" class="step-btn" disabled>&larr; Prev</button>
+        <span id="flow-indicator">Step 1 / 9</span>
+        <button id="flow-next" class="step-btn">Next &rarr;</button>
+        <button id="flow-reset" class="step-btn reset">Reset</button>
+    </div>
+
+    <div id="flow-diagram" class="diagram-container flow-diagram-container"></div>
+
+    <div id="flow-description" class="step-description">
+        <h3 id="flow-step-title"></h3>
+        <p  id="flow-step-desc"></p>
+        <p  id="flow-step-detail" class="step-detail"></p>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : Pointer Fixup                                   -->
+<!-- ========================================================= -->
+<section id="fixup" class="section panel">
+    <h2 data-i18n="fixup.title">Pointer Fixup Details</h2>
+    <p class="section-subtitle" data-i18n="fixup.subtitle">Understanding post-shadow address translation</p>
+
+    <p class="fixup-intro" data-i18n="fixup.desc"></p>
+
+    <div class="formula-box">
+        <code data-i18n="fixup.formula">NewPtr = OldPtr + (DRAM_Base - Flash_Base)</code>
+    </div>
+
+    <div id="fixup-diagram" class="diagram-container"></div>
+
+    <div class="fixup-cards">
+        <div class="fixup-card">
+            <h3 data-i18n="fixup.hob.title">HOB List Pointer Fixup</h3>
+            <p  data-i18n="fixup.hob.desc"></p>
+        </div>
+        <div class="fixup-card">
+            <h3 data-i18n="fixup.ppi.title">PPI Database Pointer Fixup</h3>
+            <p  data-i18n="fixup.ppi.desc"></p>
+        </div>
+        <div class="fixup-card">
+            <h3 data-i18n="fixup.stack.title">Stack Pointer Fixup</h3>
+            <p  data-i18n="fixup.stack.desc"></p>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : Code Deep-Dive                                  -->
+<!-- ========================================================= -->
+<section id="code" class="section panel">
+    <h2 data-i18n="code.title">Key Code Analysis</h2>
+    <p class="section-subtitle" data-i18n="code.subtitle">Core PEI Shadow implementation in EDK2 source</p>
+
+    <div class="code-blocks">
+        <!-- block 1 -->
+        <div class="code-block">
+            <h3 data-i18n="code.install.title">PeiInstallPeiMemory()</h3>
+            <p  data-i18n="code.install.desc"></p>
+            <pre><code>// MdeModulePkg/Core/Pei/Memory/MemoryServices.c
+EFI_STATUS
+EFIAPI
+PeiInstallPeiMemory (
+  IN CONST EFI_PEI_SERVICES     **PeiServices,
+  IN EFI_PHYSICAL_ADDRESS       MemoryBegin,
+  IN UINT64                     MemoryLength
+  )
+{
+  // Record permanent memory range
+  PrivateData->PhysicalMemoryBegin  = MemoryBegin;
+  PrivateData->PhysicalMemoryLength = MemoryLength;
+  PrivateData->FreePhysicalMemoryTop =
+      MemoryBegin + MemoryLength;
+
+  // Install the Memory Discovered PPI
+  // -> triggers shadow process
+  Status = PeiInstallPpi (
+             PeiServices,
+             &mMemoryDiscoveredPpi
+             );
+  return Status;
+}</code></pre>
+        </div>
+
+        <!-- block 2 -->
+        <div class="code-block">
+            <h3 data-i18n="code.shadow.title">PeiCore Shadow Logic</h3>
+            <p  data-i18n="code.shadow.desc"></p>
+            <pre><code>// MdeModulePkg/Core/Pei/PeiMain/PeiMain.c
+VOID
+EFIAPI
+PeiCore (
+  IN CONST EFI_SEC_PEI_HAND_OFF  *SecCoreData,
+  IN CONST EFI_PEI_PPI_DESCRIPTOR *PpiList,
+  IN VOID                         *Data
+  )
+{
+  // ... initialization ...
+
+  if (PrivateData.PeiMemoryInstalled &&
+      !PrivateData.PeimDispatcherReenter) {
+    //
+    // Shadow PEI Core into permanent memory
+    // so it runs faster than XIP from flash
+    //
+    PrivateData.ShadowedPeiCore = ShadowPeiCore (
+                                    &PrivateData
+                                    );
+    //
+    // Switch stack from CAR to permanent memory
+    // and re-enter PEI Core from DRAM
+    //
+    SwitchStack (
+      (SWITCH_STACK_ENTRY_POINT)(UINTN)
+          PrivateData.ShadowedPeiCore,
+      (VOID *)SecCoreData,
+      NULL,
+      (VOID *)(UINTN)NewStackTop
+      );
+    // -- never returns here --
+  }
+}</code></pre>
+        </div>
+
+        <!-- block 3 -->
+        <div class="code-block">
+            <h3 data-i18n="code.migrate.title">Stack Migration</h3>
+            <p  data-i18n="code.migrate.desc"></p>
+            <pre><code>// Conceptual: migrate stack from CAR to DRAM
+//
+// 1. Allocate new stack in permanent memory
+NewStack = AllocatePages (EFI_SIZE_TO_PAGES (StackSize));
+
+// 2. Copy CAR stack contents to new location
+CopyMem (
+  (VOID *)NewStack,
+  (VOID *)OldStackBase,
+  StackSize
+  );
+
+// 3. Calculate the fixup delta
+Delta = (INTN)NewStack - (INTN)OldStackBase;
+
+// 4. Adjust saved frame pointers & return addresses
+//    that point within the old stack range
+for (Ptr = NewStack; Ptr < NewStack + StackSize; Ptr++) {
+  if (*Ptr >= OldStackBase && *Ptr < OldStackTop) {
+    *Ptr += Delta;
+  }
+}
+
+// 5. Switch ESP / RSP to new stack
+SwitchStack (EntryPoint, Arg, NULL, NewStackTop);</code></pre>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : References                                      -->
+<!-- ========================================================= -->
+<section id="references" class="section panel">
+    <h2 data-i18n="ref.title">References</h2>
+    <p class="section-subtitle" data-i18n="ref.subtitle">Resources for deeper learning about PEI Shadow</p>
+
+    <div class="ref-grid">
+        <a class="ref-card" href="https://uefi.org/specifications" target="_blank" rel="noopener">
+            <h3 data-i18n="ref.spec">PI Specification</h3>
+            <p  data-i18n="ref.spec.desc"></p>
+        </a>
+        <a class="ref-card" href="https://github.com/tianocore/edk2/tree/master/MdeModulePkg/Core/Pei" target="_blank" rel="noopener">
+            <h3 data-i18n="ref.edk2">EDK2 Source</h3>
+            <p  data-i18n="ref.edk2.desc"></p>
+        </a>
+        <a class="ref-card" href="https://github.com/tianocore/edk2/blob/master/MdeModulePkg/Core/Pei/Dispatcher/Dispatcher.c" target="_blank" rel="noopener">
+            <h3 data-i18n="ref.edk2.dispatch">PEI Dispatcher</h3>
+            <p  data-i18n="ref.edk2.dispatch.desc">PEI Dispatcher source</p>
+        </a>
+        <a class="ref-card" href="https://github.com/tianocore/edk2/tree/master/MdeModulePkg" target="_blank" rel="noopener">
+            <h3 data-i18n="ref.mem">MdeModulePkg</h3>
+            <p  data-i18n="ref.mem.desc"></p>
+        </a>
+    </div>
+</section>
+
+<footer>
+    <p>
+        <a href="https://github.com/tianocore/edk2" target="_blank">EDK2 Source</a> &bull;
+        <a href="https://uefi.org/specifications" target="_blank">UEFI Specifications</a> &bull;
+        <a href="https://github.com/Damien-Chen" target="_blank">GitHub</a>
+    </p>
+    <p style="margin-top:12px;">&copy; 2025 Damien Chen. All rights reserved.</p>
+</footer>
+
+<script src="i18n.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

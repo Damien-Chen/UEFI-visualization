@@ -30,6 +30,16 @@ Interactive visualization of how EDK2 BaseTools process build metadata into fina
 
 Includes bilingual content (English + Traditional Chinese) and references to official EDK2 Build Specification chapters.
 
+### 4. PEI Shadow Process Visualizer
+Interactive visualization of the PEI Core shadow process during UEFI boot:
+- **Overview**: What PEI Shadow is, why it's needed, and when it happens
+- **Memory Architecture**: Flash ROM, Cache as RAM (CAR), and DRAM layout
+- **Shadow Flow**: 9-step interactive walkthrough from SEC handoff to DXE handoff
+- **Pointer Fixup**: HOB list, PPI database, and stack pointer adjustment
+- **Code Analysis**: Key EDK2 source code snippets with explanations
+
+Supports both English and Traditional Chinese (繁體中文).
+
 ## Deployment
 
 This project is configured for automatic deployment to GitHub Pages.
@@ -69,6 +79,11 @@ uefi-dev-tools/
 │   ├── script.js
 │   └── i18n.js
 ├── build-viz/              # EDK2 Build Infrastructure Visualizer
+│   ├── index.html
+│   ├── styles.css
+│   ├── script.js
+│   └── i18n.js
+├── pei-shadow-viz/         # PEI Shadow Process Visualizer
 │   ├── index.html
 │   ├── styles.css
 │   ├── script.js
