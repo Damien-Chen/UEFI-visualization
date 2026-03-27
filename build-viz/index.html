@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EDK2 BaseTools Build Flow Visualizer</title>
+    <title>EDK2 BIOS Build Pipeline Visualizer</title>
     <meta name="description"
-        content="Interactive visualization of EDK2 BaseTools build flow from DSC/INF/FDF to final FV/FD image.">
+        content="Interactive visualization of how INF, DSC and FDF files are compiled into a BIOS ROM through EDK2 BaseTools.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -23,13 +23,13 @@
     <nav class="top-nav">
         <div class="brand">
             <a href="../index.html" class="back-link" data-i18n="nav.back">← Back to Tools</a>
-            <span data-i18n="nav.title">EDK2 Build Infrastructure</span>
+            <span data-i18n="nav.title">EDK2 BIOS Build Pipeline</span>
         </div>
 
         <ul class="nav-links">
-            <li><a class="nav-link active" href="#architecture" data-i18n="nav.architecture">Architecture</a></li>
-            <li><a class="nav-link" href="#flow" data-i18n="nav.flow">Build Flow</a></li>
-            <li><a class="nav-link" href="#journey" data-i18n="nav.journey">DSC/INF/FDF Journey</a></li>
+            <li><a class="nav-link active" href="#overview" data-i18n="nav.overview">File Types</a></li>
+            <li><a class="nav-link" href="#pipeline" data-i18n="nav.pipeline">Build Pipeline</a></li>
+            <li><a class="nav-link" href="#journey" data-i18n="nav.journey">File Journey</a></li>
             <li><a class="nav-link" href="#command" data-i18n="nav.command">Build Command</a></li>
             <li><a class="nav-link" href="#references" data-i18n="nav.references">References</a></li>
         </ul>
@@ -41,202 +41,117 @@
     </nav>
 
     <main class="page">
-        <header id="architecture" class="section hero">
-            <p class="eyebrow" data-i18n="hero.eyebrow">From Meta-data to Firmware Image</p>
-            <h1 data-i18n="hero.title">How EDK2 BaseTools build .dsc/.inf/.fdf into final FV</h1>
+
+        <!-- ── Section 1: Hero / File Overview ── -->
+        <header id="overview" class="section hero">
+            <p class="eyebrow" data-i18n="hero.eyebrow">From Source Metadata to Flashable BIOS ROM</p>
+            <h1 data-i18n="hero.title">How your INF / DSC / FDF becomes a BIOS ROM</h1>
             <p class="hero-desc" data-i18n="hero.desc">
-                This page visualizes the official EDK II Build Specification flow: AutoGen parses platform meta-data,
-                MAKE stage creates module binaries, and ImageGen assembles FV/FD images through GenSec, GenFfs, GenFv and GenFds.
+                When you write a .inf, .dsc or .fdf, build.exe invokes a chain of programs to parse, compile and
+                assemble it into a flashable .fd (BIOS ROM). Select any file type below to trace its complete journey.
             </p>
 
-            <div class="artifact-grid">
-                <article class="artifact-card dsc">
-                    <span class="artifact-ext">.dsc</span>
-                    <h2 data-i18n="artifact.dsc.title">Platform Description</h2>
-                    <p data-i18n="artifact.dsc.desc">Defines active modules, library class mappings, build options, PCD
-                        values and optional FDF path.</p>
+            <div class="file-grid">
+                <article class="file-card inf">
+                    <div class="file-card-header">
+                        <span class="file-ext">.inf</span>
+                        <span class="file-badge inf-badge">Module</span>
+                    </div>
+                    <h2 data-i18n="file.inf.title">Module Description (.inf)</h2>
+                    <p data-i18n="file.inf.desc">Defines a module's sources, package dependencies, Library Classes,
+                        PCDs and module type.</p>
+                    <button class="track-btn" data-tab="inf" data-i18n="file.inf.track">Trace INF path →</button>
                 </article>
 
-                <article class="artifact-card inf">
-                    <span class="artifact-ext">.inf</span>
-                    <h2 data-i18n="artifact.inf.title">Module Description</h2>
-                    <p data-i18n="artifact.inf.desc">Defines sources, packages, library classes, module type, binaries,
-                        and build rules for each module.</p>
+                <article class="file-card dsc">
+                    <div class="file-card-header">
+                        <span class="file-ext">.dsc</span>
+                        <span class="file-badge dsc-badge">Platform</span>
+                    </div>
+                    <h2 data-i18n="file.dsc.title">Platform Description (.dsc)</h2>
+                    <p data-i18n="file.dsc.desc">Defines which modules to build, Library Class mappings, PCD values
+                        and build options for the entire platform.</p>
+                    <button class="track-btn" data-tab="dsc" data-i18n="file.dsc.track">Trace DSC path →</button>
                 </article>
 
-                <article class="artifact-card dec">
-                    <span class="artifact-ext">.dec</span>
-                    <h2 data-i18n="artifact.dec.title">Package Declaration</h2>
-                    <p data-i18n="artifact.dec.desc">Provides package includes, GUID/Protocol/PPI declarations and
-                        package-level PCD defaults.</p>
-                </article>
-
-                <article class="artifact-card fdf">
-                    <span class="artifact-ext">.fdf</span>
-                    <h2 data-i18n="artifact.fdf.title">Flash Layout</h2>
-                    <p data-i18n="artifact.fdf.desc">Defines [FV]/[FD]/[Capsule] image layout, FFS placement and flash
-                        region composition.</p>
-                </article>
-
-                <article class="artifact-card conf">
-                    <span class="artifact-ext">Conf/*.txt</span>
-                    <h2 data-i18n="artifact.conf.title">Build Configuration</h2>
-                    <p data-i18n="artifact.conf.desc">target.txt, tools_def.txt and build_rule.txt resolve architecture,
-                        toolchain and tool invocation rules.</p>
-                </article>
-
-                <article class="artifact-card fv">
-                    <span class="artifact-ext">FV / FD</span>
-                    <h2 data-i18n="artifact.fv.title">Firmware Images</h2>
-                    <p data-i18n="artifact.fv.desc">ImageGen packs sections and FFS into firmware volumes (FV), then
-                        combines volumes into final flash device (FD) outputs.</p>
+                <article class="file-card fdf">
+                    <div class="file-card-header">
+                        <span class="file-ext">.fdf</span>
+                        <span class="file-badge fdf-badge">Flash Layout</span>
+                    </div>
+                    <h2 data-i18n="file.fdf.title">Flash Layout (.fdf)</h2>
+                    <p data-i18n="file.fdf.desc">Defines the final BIOS ROM flash layout: which modules go in which
+                        FV, region sizes and offsets.</p>
+                    <button class="track-btn" data-tab="fdf" data-i18n="file.fdf.track">Trace FDF path →</button>
                 </article>
             </div>
         </header>
 
-        <section id="flow" class="section panel">
+        <!-- ── Section 2: Build Pipeline ── -->
+        <section id="pipeline" class="section panel">
             <div class="section-head">
-                <h2 data-i18n="flow.title">BaseTools pipeline (official 3-stage model)</h2>
-                <p data-i18n="flow.desc">Walk through each step from edksetup/build.exe inputs to final firmware image
-                    artifacts.</p>
+                <h2 data-i18n="pipeline.title">Build Pipeline: Programs invoked by build.exe</h2>
+                <p data-i18n="pipeline.desc">From running the build command to a BIOS ROM, here is every program
+                    called and what it does. Click any node for a detailed explanation.</p>
             </div>
 
-            <div class="step-controls">
-                <button id="flow-prev" class="step-btn" disabled data-i18n="btn.prev">← Previous</button>
-                <span id="flow-indicator" class="step-indicator">Step 1 / 8</span>
-                <button id="flow-next" class="step-btn" data-i18n="btn.next">Next →</button>
-                <button id="flow-reset" class="step-btn reset" data-i18n="btn.reset">Reset</button>
-            </div>
-
-            <div id="flow-description" class="step-description">
-                <h3>Step 1</h3>
-                <p>...</p>
-            </div>
-
-            <div class="flow-layout">
-                <div class="flow-diagram-wrap">
-                    <svg id="flow-svg" viewBox="0 0 1120 320" role="img" aria-label="EDK2 BaseTools build flow diagram">
+            <div class="pipeline-layout">
+                <div class="pipeline-diagram-wrap">
+                    <div class="pipeline-hint" data-i18n="pipeline.clickHint">Click a node for details</div>
+                    <svg id="pipeline-svg" viewBox="0 0 1100 400" role="img"
+                        aria-label="EDK2 build pipeline diagram showing all programs from build.exe to BIOS ROM">
                         <!-- Rendered by script.js -->
                     </svg>
                 </div>
 
-                <div class="flow-code">
-                    <h3 data-i18n="flow.codeTitle">Representative command / operation</h3>
-                    <pre id="flow-code-content"></pre>
+                <div class="pipeline-detail" id="pipeline-detail">
+                    <h3 class="detail-title" data-i18n="pipeline.detail.title">Program Details</h3>
+                    <div class="detail-placeholder" id="detail-placeholder">
+                        <span data-i18n="pipeline.detail.placeholder">← Click any program node in the pipeline</span>
+                    </div>
+                    <div class="detail-content hidden" id="detail-content">
+                        <div class="detail-name" id="detail-name"></div>
+                        <div class="detail-row">
+                            <span class="detail-label" data-i18n="pipeline.detail.desc">Description</span>
+                            <p class="detail-text" id="detail-desc"></p>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label" data-i18n="pipeline.detail.input">Input</span>
+                            <p class="detail-text detail-mono" id="detail-input"></p>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label" data-i18n="pipeline.detail.output">Output</span>
+                            <p class="detail-text detail-mono" id="detail-output"></p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
+        <!-- ── Section 3: File Journey (tabs) ── -->
         <section id="journey" class="section panel">
             <div class="section-head">
-                <h2 data-i18n="journey.title">How .dsc, .inf and .fdf converge into final FV</h2>
-                <p data-i18n="journey.desc">DSC chooses modules and platform policy, INF describes each module, FDF
-                    describes image layout; BaseTools resolves and assembles all of them.</p>
+                <h2 data-i18n="journey.title">File Journey: Select a file to trace</h2>
+                <p data-i18n="journey.desc">Select INF, DSC or FDF to see every step and program involved — from
+                    first being read to becoming the final BIOS ROM.</p>
             </div>
 
-            <div class="journey-grid">
-                <article class="journey-card">
-                    <h3 data-i18n="journey.diagramTitle">Dependency and ownership map</h3>
-                    <svg class="journey-svg" viewBox="0 0 920 330" role="img"
-                        aria-label="DSC INF FDF relationship diagram">
-                        <defs>
-                            <marker id="mini-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-                                <path d="M0,0 L0,6 L6,3 z" fill="#31b89f"></path>
-                            </marker>
-                        </defs>
+            <div class="journey-tabs">
+                <button class="journey-tab active" data-tab="inf" data-i18n="journey.tab.inf">.inf Module</button>
+                <button class="journey-tab" data-tab="dsc" data-i18n="journey.tab.dsc">.dsc Platform</button>
+                <button class="journey-tab" data-tab="fdf" data-i18n="journey.tab.fdf">.fdf Flash Layout</button>
+            </div>
 
-                        <rect x="40" y="40" width="190" height="86" rx="12" class="box dsc"></rect>
-                        <text x="135" y="72" class="box-title">.dsc</text>
-                        <text x="135" y="96" class="box-desc" data-i18n="journey.boxDsc">Platform policy</text>
-
-                        <rect x="280" y="40" width="190" height="86" rx="12" class="box inf"></rect>
-                        <text x="375" y="72" class="box-title">.inf</text>
-                        <text x="375" y="96" class="box-desc" data-i18n="journey.boxInf">Module recipe</text>
-
-                        <rect x="520" y="40" width="190" height="86" rx="12" class="box dec"></rect>
-                        <text x="615" y="72" class="box-title">.dec</text>
-                        <text x="615" y="96" class="box-desc" data-i18n="journey.boxDec">Package metadata</text>
-
-                        <rect x="760" y="40" width="120" height="86" rx="12" class="box conf"></rect>
-                        <text x="820" y="72" class="box-title">Conf</text>
-                        <text x="820" y="96" class="box-desc" data-i18n="journey.boxConf">Build knobs</text>
-
-                        <rect x="160" y="190" width="220" height="96" rx="12" class="box autogen"></rect>
-                        <text x="270" y="224" class="box-title" data-i18n="journey.boxAutoGenTitle">AutoGen +
-                            Makefiles</text>
-                        <text x="270" y="250" class="box-desc" data-i18n="journey.boxAutoGenDesc">Resolve libs,
-                            PCDs, build graph</text>
-
-                        <rect x="430" y="190" width="220" height="96" rx="12" class="box make"></rect>
-                        <text x="540" y="224" class="box-title" data-i18n="journey.boxMakeTitle">MAKE stage</text>
-                        <text x="540" y="250" class="box-desc" data-i18n="journey.boxMakeDesc">Compile / link into
-                            .efi</text>
-
-                        <rect x="700" y="190" width="180" height="96" rx="12" class="box imagegen"></rect>
-                        <text x="790" y="224" class="box-title" data-i18n="journey.boxImageGenTitle">GenFds
-                            orchestration</text>
-                        <text x="790" y="250" class="box-desc" data-i18n="journey.boxImageGenDesc">GenSec → GenFfs
-                            → GenFv</text>
-
-                        <path d="M 230 83 L 272 83" class="journey-arrow"></path>
-                        <path d="M 470 83 L 512 83" class="journey-arrow"></path>
-                        <path d="M 710 83 L 752 83" class="journey-arrow"></path>
-
-                        <path d="M 140 126 L 220 186" class="journey-arrow"></path>
-                        <path d="M 365 126 L 290 186" class="journey-arrow"></path>
-                        <path d="M 615 126 L 330 186" class="journey-arrow"></path>
-                        <path d="M 820 126 L 355 186" class="journey-arrow"></path>
-
-                        <path d="M 380 238 L 422 238" class="journey-arrow"></path>
-                        <path d="M 650 238 L 692 238" class="journey-arrow"></path>
-
-                        <text x="872" y="304" class="final-label" data-i18n="journey.final">Final FV / FD / Capsule</text>
-                    </svg>
-                </article>
-
-                <article class="journey-card">
-                    <h3 data-i18n="journey.tableTitle">Stage input/output matrix</h3>
-                    <div class="table-scroll">
-                        <table class="artifact-table">
-                            <thead>
-                                <tr>
-                                    <th data-i18n="journey.table.stage">Stage</th>
-                                    <th data-i18n="journey.table.input">Primary input</th>
-                                    <th data-i18n="journey.table.output">Primary output</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td data-i18n="journey.row.setup.stage">Env setup</td>
-                                    <td data-i18n="journey.row.setup.input">WORKSPACE, EDK_TOOLS_PATH, Conf/target.txt</td>
-                                    <td data-i18n="journey.row.setup.output">Active platform/toolchain/arch context</td>
-                                </tr>
-                                <tr>
-                                    <td data-i18n="journey.row.autogen.stage">AutoGen parse</td>
-                                    <td data-i18n="journey.row.autogen.input">DSC + INF + DEC + FDF(+PCD)</td>
-                                    <td data-i18n="journey.row.autogen.output">AutoGen.c/h, module makefiles, AsBuilt INF</td>
-                                </tr>
-                                <tr>
-                                    <td data-i18n="journey.row.make.stage">MAKE stage</td>
-                                    <td data-i18n="journey.row.make.input">Makefiles + sources + tool defs</td>
-                                    <td data-i18n="journey.row.make.output">PE/COFF and .efi module binaries</td>
-                                </tr>
-                                <tr>
-                                    <td data-i18n="journey.row.image.stage">ImageGen stage</td>
-                                    <td data-i18n="journey.row.image.input">.efi + FDF [FV]/[FD] layout rules</td>
-                                    <td data-i18n="journey.row.image.output">.sec/.ffs/.fv and final .fd image</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </article>
+            <div id="journey-content" class="journey-content">
+                <!-- Rendered by script.js -->
             </div>
         </section>
 
+        <!-- ── Section 4: Build Command Builder ── -->
         <section id="command" class="section panel">
             <div class="section-head">
-                <h2 data-i18n="command.title">Build command builder</h2>
-                <p data-i18n="command.desc">Compose a practical build command and see how options map to the flow.</p>
+                <h2 data-i18n="command.title">Build Command Builder</h2>
+                <p data-i18n="command.desc">Compose a build command and see which pipeline programs it activates.</p>
             </div>
 
             <div class="cmd-grid">
@@ -294,36 +209,37 @@
 
                 <label class="checkline">
                     <input id="fdf-enable" type="checkbox" checked>
-                    <span data-i18n="command.useFdf">Enable -f (FDF override)</span>
+                    <span data-i18n="command.useFdf">Enable -f (override DSC's FDF)</span>
                 </label>
 
                 <label class="checkline">
                     <input id="fds-enable" type="checkbox" checked>
-                    <span data-i18n="command.fdsTarget">Append fds target (invoke ImageGen/GenFds)</span>
+                    <span data-i18n="command.fdsTarget">Append fds target (trigger GenFds ImageGen)</span>
                 </label>
             </div>
 
             <pre id="build-command-output" class="command-output"></pre>
 
             <div class="command-notes">
-                <h3 data-i18n="command.notesTitle">Why these options matter</h3>
+                <h3 data-i18n="command.notesTitle">How these flags map to the pipeline</h3>
                 <ul>
-                    <li data-i18n="command.note1">-p selects the platform DSC graph (modules, library mapping,
-                        platform PCD policy).</li>
-                    <li data-i18n="command.note2">-a/-b/-t choose architecture, target and toolchain; command line
-                        overrides target.txt.</li>
-                    <li data-i18n="command.note3">-f can override FDF from DSC; fds target drives GenFds image
-                        generation.</li>
-                    <li data-i18n="command.note4">-m switches to single-module build while still using platform
-                        context.</li>
+                    <li data-i18n="command.note1">-p selects DSC → triggers DscParser, defines the entire module set
+                        and Library mappings.</li>
+                    <li data-i18n="command.note2">-a/-b/-t set arch/target/toolchain → determines which CC/Linker in
+                        tools_def.txt is used.</li>
+                    <li data-i18n="command.note3">-f overrides the FDF path → changes what FdfParser reads and how
+                        GenFds assembles the ROM.</li>
+                    <li data-i18n="command.note4">-m builds only this INF, skipping other [Components], but still
+                        uses full platform context.</li>
                 </ul>
             </div>
         </section>
 
+        <!-- ── Section 5: References ── -->
         <section id="references" class="section panel">
             <div class="section-head">
-                <h2 data-i18n="references.title">Checked official EDK2 docs for this visualization</h2>
-                <p data-i18n="references.desc">The flow and terminology on this page are based on the following
+                <h2 data-i18n="references.title">Official EDK2 docs referenced for this page</h2>
+                <p data-i18n="references.desc">The pipeline and naming on this page are based on the following
                     specification chapters.</p>
             </div>
 
@@ -342,8 +258,8 @@
                 <li>
                     <a href="https://tianocore-docs.github.io/edk2-BuildSpecification/draft/10_post-build_imagegen_stage_-_flash/"
                         target="_blank" rel="noopener noreferrer">10 Post-build ImageGen Stage</a>
-                    <p data-i18n="references.r3">Documents conversion path .efi → section → FFS → FV → FD and the
-                        role of GenFds.</p>
+                    <p data-i18n="references.r3">Documents the .efi → section/FFS/FV/FD conversion path and the role
+                        of GenFds.</p>
                 </li>
                 <li>
                     <a href="https://tianocore-docs.github.io/edk2-BuildSpecification/draft/10_post-build_imagegen_stage_-_flash/101_overview_of_flash_device_layout.html"
@@ -354,8 +270,8 @@
                 <li>
                     <a href="https://tianocore-docs.github.io/edk2-BuildSpecification/draft/10_post-build_imagegen_stage_-_flash/104_create_the_fv_image_files.html"
                         target="_blank" rel="noopener noreferrer">10.4 Create the FV Image File(s)</a>
-                    <p data-i18n="references.r5">Explains how [FV] entries in FDF drive FV composition and generated
-                        FV INF consumed by GenFv.</p>
+                    <p data-i18n="references.r5">Explains how [FV] entries in FDF drive FV composition and the
+                        generated FV INF consumed by GenFv.</p>
                 </li>
                 <li>
                     <a href="https://tianocore-docs.github.io/edk2-BuildSpecification/release-1.28/appendix_d_buildexe_command/d4_usage.html"
@@ -368,7 +284,7 @@
     </main>
 
     <footer class="footer">
-        <p data-i18n="footer.text">EDK2 BaseTools Build Flow Visualization | Educational purpose</p>
+        <p data-i18n="footer.text">EDK2 BIOS Build Pipeline Visualization | Educational purpose</p>
     </footer>
 
     <script src="script.js" defer></script>

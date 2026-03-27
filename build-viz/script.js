@@ -1,98 +1,180 @@
-const FLOW_STEPS = [
+/* ── Pipeline Data ── */
+
+const PIPELINE_TOOLS = [
     {
-        titleKey: 'flow.step1.title',
-        nodeKey: 'flow.step1.node',
-        descKey: 'flow.step1.desc',
-        inputKeys: ['flow.step1.in1', 'flow.step1.in2', 'flow.step1.in3'],
-        outputKeys: ['flow.step1.out1', 'flow.step1.out2'],
-        code: {
-            en: `# Environment bootstrap\n> edksetup.bat Rebuild\n\nset WORKSPACE=D:\\edk2\nset EDK_TOOLS_PATH=%WORKSPACE%\\BaseTools\nset PATH=%EDK_TOOLS_PATH%\\Bin\\Win32;%PATH%`,
-            'zh-TW': `# 初始化建置環境\n> edksetup.bat Rebuild\n\nset WORKSPACE=D:\\edk2\nset EDK_TOOLS_PATH=%WORKSPACE%\\BaseTools\nset PATH=%EDK_TOOLS_PATH%\\Bin\\Win32;%PATH%`
-        }
+        id: 'build',
+        nameKey: 'tool.build.name',
+        descKey: 'tool.build.desc',
+        inputKey: 'tool.build.input',
+        outputKey: 'tool.build.output',
+        stage: 'entry',
+        x: 113, y: 190, w: 110, h: 44
     },
     {
-        titleKey: 'flow.step2.title',
-        nodeKey: 'flow.step2.node',
-        descKey: 'flow.step2.desc',
-        inputKeys: ['flow.step2.in1', 'flow.step2.in2', 'flow.step2.in3'],
-        outputKeys: ['flow.step2.out1', 'flow.step2.out2'],
-        code: {
-            en: `# CLI can override target.txt\nbuild -p OvmfPkg/OvmfPkgX64.dsc -a X64 -b DEBUG -t GCC5\n\n# optional module mode\n# build -p ... -m MdeModulePkg/Application/HelloWorld/HelloWorld.inf`,
-            'zh-TW': `# 命令列可覆蓋 target.txt\nbuild -p OvmfPkg/OvmfPkgX64.dsc -a X64 -b DEBUG -t GCC5\n\n# 模組模式\n# build -p ... -m MdeModulePkg/Application/HelloWorld/HelloWorld.inf`
-        }
+        id: 'dscparser',
+        nameKey: 'tool.dscparser.name',
+        descKey: 'tool.dscparser.desc',
+        inputKey: 'tool.dscparser.input',
+        outputKey: 'tool.dscparser.output',
+        stage: 'autogen',
+        x: 253, y: 62, w: 100, h: 42
     },
     {
-        titleKey: 'flow.step3.title',
-        nodeKey: 'flow.step3.node',
-        descKey: 'flow.step3.desc',
-        inputKeys: ['flow.step3.in1', 'flow.step3.in2', 'flow.step3.in3'],
-        outputKeys: ['flow.step3.out1', 'flow.step3.out2'],
-        code: {
-            en: `# Parse tool definitions and rules\nTOOL_CHAIN_CONF -> tools_def.txt\nBUILD_RULE_CONF -> build_rule.txt\n\n# derive CC / ASL / VFR / GENFW command macros`,
-            'zh-TW': `# 解析工具鏈與規則\nTOOL_CHAIN_CONF -> tools_def.txt\nBUILD_RULE_CONF -> build_rule.txt\n\n# 產生 CC / ASL / VFR / GENFW 等命令巨集`
-        }
+        id: 'infparser',
+        nameKey: 'tool.infparser.name',
+        descKey: 'tool.infparser.desc',
+        inputKey: 'tool.infparser.input',
+        outputKey: 'tool.infparser.output',
+        stage: 'autogen',
+        x: 253, y: 118, w: 100, h: 42
     },
     {
-        titleKey: 'flow.step4.title',
-        nodeKey: 'flow.step4.node',
-        descKey: 'flow.step4.desc',
-        inputKeys: ['flow.step4.in1', 'flow.step4.in2', 'flow.step4.in3'],
-        outputKeys: ['flow.step4.out1', 'flow.step4.out2'],
-        code: {
-            en: `# Metadata parse stage\nParse DSC -> components, library classes, PCD policy\nParse INF -> sources, packages, module type\nParse DEC -> includes, GUID/Protocol/PPI, default PCD\nParse FDF -> image layout, conditional directives`,
-            'zh-TW': `# Meta-data 解析階段\n解析 DSC -> 元件、library class、PCD 政策\n解析 INF -> source、packages、module type\n解析 DEC -> include、GUID/Protocol/PPI、PCD 預設\n解析 FDF -> 映像版圖與條件式`
-        }
+        id: 'decparser',
+        nameKey: 'tool.decparser.name',
+        descKey: 'tool.decparser.desc',
+        inputKey: 'tool.decparser.input',
+        outputKey: 'tool.decparser.output',
+        stage: 'autogen',
+        x: 361, y: 62, w: 100, h: 42
     },
     {
-        titleKey: 'flow.step5.title',
-        nodeKey: 'flow.step5.node',
-        descKey: 'flow.step5.desc',
-        inputKeys: ['flow.step5.in1', 'flow.step5.in2', 'flow.step5.in3'],
-        outputKeys: ['flow.step5.out1', 'flow.step5.out2'],
-        code: {
-            en: `# AutoGen post-process\nResolve library instances recursively\nApply PCD precedence (CLI > DSC > FDF > INF > DEC)\nGenerate AutoGen.c/AutoGen.h + module/platform makefiles\nEmit AsBuilt INF`,
-            'zh-TW': `# AutoGen 後處理\n遞迴解 library instance\n套用 PCD 優先序 (CLI > DSC > FDF > INF > DEC)\n產生 AutoGen.c/AutoGen.h + makefiles\n輸出 AsBuilt INF`
-        }
+        id: 'fdfparser',
+        nameKey: 'tool.fdfparser.name',
+        descKey: 'tool.fdfparser.desc',
+        inputKey: 'tool.fdfparser.input',
+        outputKey: 'tool.fdfparser.output',
+        stage: 'autogen',
+        x: 361, y: 118, w: 100, h: 42
     },
     {
-        titleKey: 'flow.step6.title',
-        nodeKey: 'flow.step6.node',
-        descKey: 'flow.step6.desc',
-        inputKeys: ['flow.step6.in1', 'flow.step6.in2', 'flow.step6.in3'],
-        outputKeys: ['flow.step6.out1', 'flow.step6.out2'],
-        code: {
-            en: `# MAKE stage\nmake -f Build/.../Module/OUTPUT/Makefile\n\n# typical artifacts\n*.obj -> *.lib -> PE32/PE32+ -> *.efi`,
-            'zh-TW': `# MAKE 階段\nmake -f Build/.../Module/OUTPUT/Makefile\n\n# 常見產物\n*.obj -> *.lib -> PE32/PE32+ -> *.efi`
-        }
+        id: 'autogen',
+        nameKey: 'tool.autogen.name',
+        descKey: 'tool.autogen.desc',
+        inputKey: 'tool.autogen.input',
+        outputKey: 'tool.autogen.output',
+        stage: 'autogen',
+        x: 253, y: 192, w: 208, h: 42
     },
     {
-        titleKey: 'flow.step7.title',
-        nodeKey: 'flow.step7.node',
-        descKey: 'flow.step7.desc',
-        inputKeys: ['flow.step7.in1', 'flow.step7.in2', 'flow.step7.in3'],
-        outputKeys: ['flow.step7.out1', 'flow.step7.out2'],
-        code: {
-            en: `# ImageGen path driven by GenFds\nGenSec:  .efi -> section\nGenFfs:  section -> .ffs\nGenFv:   ffs list -> .fv\nGenFds:  combine FV + regions -> .fd`,
-            'zh-TW': `# 由 GenFds 驅動的 ImageGen\nGenSec:  .efi -> section\nGenFfs:  section -> .ffs\nGenFv:   ffs list -> .fv\nGenFds:  組合 FV + regions -> .fd`
-        }
+        id: 'make',
+        nameKey: 'tool.make.name',
+        descKey: 'tool.make.desc',
+        inputKey: 'tool.make.input',
+        outputKey: 'tool.make.output',
+        stage: 'make',
+        x: 495, y: 62, w: 202, h: 42
     },
     {
-        titleKey: 'flow.step8.title',
-        nodeKey: 'flow.step8.node',
-        descKey: 'flow.step8.desc',
-        inputKeys: ['flow.step8.in1', 'flow.step8.in2', 'flow.step8.in3'],
-        outputKeys: ['flow.step8.out1', 'flow.step8.out2'],
-        code: {
-            en: `# Final deliverables\nBuild/OvmfX64/DEBUG_GCC5/FV/*.fv\nBuild/OvmfX64/DEBUG_GCC5/FV/*.fd\nBuild/OvmfX64/DEBUG_GCC5/FV/*.cap (optional)\nBuild/.../*.rom (option ROM path)`,
-            'zh-TW': `# 最終交付物\nBuild/OvmfX64/DEBUG_GCC5/FV/*.fv\nBuild/OvmfX64/DEBUG_GCC5/FV/*.fd\nBuild/OvmfX64/DEBUG_GCC5/FV/*.cap (可選)\nBuild/.../*.rom (Option ROM 路徑)`
-        }
+        id: 'compiler',
+        nameKey: 'tool.compiler.name',
+        descKey: 'tool.compiler.desc',
+        inputKey: 'tool.compiler.input',
+        outputKey: 'tool.compiler.output',
+        stage: 'make',
+        x: 495, y: 130, w: 93, h: 42
+    },
+    {
+        id: 'linker',
+        nameKey: 'tool.linker.name',
+        descKey: 'tool.linker.desc',
+        inputKey: 'tool.linker.input',
+        outputKey: 'tool.linker.output',
+        stage: 'make',
+        x: 596, y: 130, w: 96, h: 42
+    },
+    {
+        id: 'genfw',
+        nameKey: 'tool.genfw.name',
+        descKey: 'tool.genfw.desc',
+        inputKey: 'tool.genfw.input',
+        outputKey: 'tool.genfw.output',
+        stage: 'make',
+        x: 495, y: 198, w: 202, h: 42
+    },
+    {
+        id: 'gensec',
+        nameKey: 'tool.gensec.name',
+        descKey: 'tool.gensec.desc',
+        inputKey: 'tool.gensec.input',
+        outputKey: 'tool.gensec.output',
+        stage: 'imagegen',
+        x: 728, y: 62, w: 108, h: 42
+    },
+    {
+        id: 'genffs',
+        nameKey: 'tool.genffs.name',
+        descKey: 'tool.genffs.desc',
+        inputKey: 'tool.genffs.input',
+        outputKey: 'tool.genffs.output',
+        stage: 'imagegen',
+        x: 728, y: 118, w: 108, h: 42
+    },
+    {
+        id: 'genfv',
+        nameKey: 'tool.genfv.name',
+        descKey: 'tool.genfv.desc',
+        inputKey: 'tool.genfv.input',
+        outputKey: 'tool.genfv.output',
+        stage: 'imagegen',
+        x: 844, y: 62, w: 108, h: 42
+    },
+    {
+        id: 'genfds',
+        nameKey: 'tool.genfds.name',
+        descKey: 'tool.genfds.desc',
+        inputKey: 'tool.genfds.input',
+        outputKey: 'tool.genfds.output',
+        stage: 'imagegen',
+        x: 728, y: 192, w: 224, h: 42
     }
 ];
 
-let currentFlowStep = 0;
+const STAGE_REGIONS = [
+    { id: 'autogen', labelKey: 'pipeline.stage.autogen', x: 246, y: 28, w: 222, h: 256 },
+    { id: 'make',    labelKey: 'pipeline.stage.make',    x: 488, y: 28, w: 216, h: 256 },
+    { id: 'imagegen',labelKey: 'pipeline.stage.imagegen',x: 720, y: 28, w: 260, h: 256 }
+];
+
+/* ── Journey Data ── */
+
+const JOURNEY_STEPS = {
+    inf: [
+        { titleKey: 'journey.inf.s1.title', programKey: 'journey.inf.s1.program', descKey: 'journey.inf.s1.desc', artifactKey: 'journey.inf.s1.artifact' },
+        { titleKey: 'journey.inf.s2.title', programKey: 'journey.inf.s2.program', descKey: 'journey.inf.s2.desc', artifactKey: 'journey.inf.s2.artifact' },
+        { titleKey: 'journey.inf.s3.title', programKey: 'journey.inf.s3.program', descKey: 'journey.inf.s3.desc', artifactKey: 'journey.inf.s3.artifact' },
+        { titleKey: 'journey.inf.s4.title', programKey: 'journey.inf.s4.program', descKey: 'journey.inf.s4.desc', artifactKey: 'journey.inf.s4.artifact' },
+        { titleKey: 'journey.inf.s5.title', programKey: 'journey.inf.s5.program', descKey: 'journey.inf.s5.desc', artifactKey: 'journey.inf.s5.artifact' },
+        { titleKey: 'journey.inf.s6.title', programKey: 'journey.inf.s6.program', descKey: 'journey.inf.s6.desc', artifactKey: 'journey.inf.s6.artifact' },
+        { titleKey: 'journey.inf.s7.title', programKey: 'journey.inf.s7.program', descKey: 'journey.inf.s7.desc', artifactKey: 'journey.inf.s7.artifact' },
+        { titleKey: 'journey.inf.s8.title', programKey: 'journey.inf.s8.program', descKey: 'journey.inf.s8.desc', artifactKey: 'journey.inf.s8.artifact' },
+        { titleKey: 'journey.inf.s9.title', programKey: 'journey.inf.s9.program', descKey: 'journey.inf.s9.desc', artifactKey: 'journey.inf.s9.artifact' }
+    ],
+    dsc: [
+        { titleKey: 'journey.dsc.s1.title', programKey: 'journey.dsc.s1.program', descKey: 'journey.dsc.s1.desc', artifactKey: 'journey.dsc.s1.artifact' },
+        { titleKey: 'journey.dsc.s2.title', programKey: 'journey.dsc.s2.program', descKey: 'journey.dsc.s2.desc', artifactKey: 'journey.dsc.s2.artifact' },
+        { titleKey: 'journey.dsc.s3.title', programKey: 'journey.dsc.s3.program', descKey: 'journey.dsc.s3.desc', artifactKey: 'journey.dsc.s3.artifact' },
+        { titleKey: 'journey.dsc.s4.title', programKey: 'journey.dsc.s4.program', descKey: 'journey.dsc.s4.desc', artifactKey: 'journey.dsc.s4.artifact' },
+        { titleKey: 'journey.dsc.s5.title', programKey: 'journey.dsc.s5.program', descKey: 'journey.dsc.s5.desc', artifactKey: 'journey.dsc.s5.artifact' },
+        { titleKey: 'journey.dsc.s6.title', programKey: 'journey.dsc.s6.program', descKey: 'journey.dsc.s6.desc', artifactKey: 'journey.dsc.s6.artifact' }
+    ],
+    fdf: [
+        { titleKey: 'journey.fdf.s1.title', programKey: 'journey.fdf.s1.program', descKey: 'journey.fdf.s1.desc', artifactKey: 'journey.fdf.s1.artifact' },
+        { titleKey: 'journey.fdf.s2.title', programKey: 'journey.fdf.s2.program', descKey: 'journey.fdf.s2.desc', artifactKey: 'journey.fdf.s2.artifact' },
+        { titleKey: 'journey.fdf.s3.title', programKey: 'journey.fdf.s3.program', descKey: 'journey.fdf.s3.desc', artifactKey: 'journey.fdf.s3.artifact' },
+        { titleKey: 'journey.fdf.s4.title', programKey: 'journey.fdf.s4.program', descKey: 'journey.fdf.s4.desc', artifactKey: 'journey.fdf.s4.artifact' },
+        { titleKey: 'journey.fdf.s5.title', programKey: 'journey.fdf.s5.program', descKey: 'journey.fdf.s5.desc', artifactKey: 'journey.fdf.s5.artifact' }
+    ]
+};
+
+/* ── State ── */
+
+let activeToolId = null;
+let activeJourneyTab = 'inf';
+
+/* ── Utilities ── */
 
 function escapeXml(text) {
-    return text
+    return String(text)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
@@ -100,166 +182,207 @@ function escapeXml(text) {
         .replace(/'/g, '&#39;');
 }
 
-function linesToTspans(lines, startX, startY, lineHeight) {
-    return lines
-        .map((line, index) => `<tspan x="${startX}" y="${startY + index * lineHeight}">${escapeXml(line)}</tspan>`)
-        .join('');
-}
+/* ── Pipeline SVG ── */
 
-function getFlowCode(step) {
-    const lang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
-    return step.code[lang] || step.code.en;
-}
+function renderPipelineSVG() {
+    const svg = document.getElementById('pipeline-svg');
+    if (!svg) return;
 
-function renderFlowDiagram(stepIndex) {
-    const svg = document.getElementById('flow-svg');
-    if (!svg) {
-        return;
-    }
+    let html = `<defs>
+        <marker id="parrow" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
+            <path d="M0,0 L7,3.5 L0,7 z" fill="rgba(126,168,187,0.55)"></path>
+        </marker>
+    </defs>`;
 
-    const nodeW = 116;
-    const nodeH = 56;
-    const startX = 16;
-    const gap = 22;
-    const nodeY = 44;
+    /* Stage background regions */
+    STAGE_REGIONS.forEach(reg => {
+        html += `<rect class="p-stage-bg" x="${reg.x}" y="${reg.y}" width="${reg.w}" height="${reg.h}" rx="10"></rect>`;
+        html += `<text class="p-stage-label" x="${reg.x + reg.w / 2}" y="${reg.y + 17}">${escapeXml(t(reg.labelKey))}</text>`;
+    });
 
-    let svgContent = `
-        <defs>
-            <marker id="flow-arrow-head" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
-                <path d="M 0 0 L 8 4 L 0 8 z" fill="#6ab7be"></path>
-            </marker>
-        </defs>
-        <line class="flow-stage-line" x1="20" y1="72" x2="1085" y2="72"></line>
+    /* Input endpoint: x=10 to x=96 */
+    html += `
+        <rect class="p-endpoint-rect" x="10" y="182" width="92" height="56" rx="10"></rect>
+        <text class="p-endpoint-text" x="56" y="207">${escapeXml(t('pipeline.stage.input'))}</text>
+        <text class="p-endpoint-text" style="fill:#53b7de;font-size:9px" x="56" y="222">.inf / .dsc / .fdf</text>
     `;
 
-    FLOW_STEPS.forEach((step, index) => {
-        const x = startX + index * (nodeW + gap);
-        let cls = 'future';
-        if (index < stepIndex) {
-            cls = 'done';
-        } else if (index === stepIndex) {
-            cls = 'current';
-        }
+    /* Main flow arrows */
+    /* Input → build.exe (96 → 111) */
+    html += `<path class="p-arrow" marker-end="url(#parrow)" d="M102,210 L111,210"></path>`;
+    /* build.exe → AutoGen stage (223 → 244) */
+    html += `<path class="p-arrow" marker-end="url(#parrow)" d="M223,212 L244,212"></path>`;
+    /* AutoGen → MAKE (468 → 486) */
+    html += `<path class="p-arrow" marker-end="url(#parrow)" d="M469,156 L486,156"></path>`;
+    /* MAKE → ImageGen (704 → 718) */
+    html += `<path class="p-arrow" marker-end="url(#parrow)" d="M705,156 L718,156"></path>`;
+    /* ImageGen → Output (981 → 998) */
+    html += `<path class="p-arrow" marker-end="url(#parrow)" d="M981,212 L998,212"></path>`;
 
-        svgContent += `
-            <g class="flow-node ${cls}">
-                <rect class="flow-node-rect" x="${x}" y="${nodeY}" rx="10" width="${nodeW}" height="${nodeH}"></rect>
-                <text class="flow-node-text" x="${x + nodeW / 2}" y="${nodeY + 24}">${escapeXml(t(step.nodeKey))}</text>
-                <text class="flow-node-sub" x="${x + nodeW / 2}" y="${nodeY + 42}">S${index + 1}</text>
+    /* Output endpoint: x=1000 to x=1088 */
+    html += `
+        <rect class="p-endpoint-rect" style="stroke:rgba(255,159,90,0.5)" x="1000" y="182" width="90" height="56" rx="10"></rect>
+        <text class="p-endpoint-text" style="fill:#ff9f5a" x="1045" y="207">${escapeXml(t('pipeline.stage.output'))}</text>
+        <text class="p-endpoint-text" style="fill:#ff9f5a;font-size:9px" x="1045" y="222">*.fd</text>
+    `;
+
+    /* Tool nodes */
+    PIPELINE_TOOLS.forEach(tool => {
+        const cx = tool.x + tool.w / 2;
+        const cy = tool.y + tool.h / 2;
+        const isActive = tool.id === activeToolId;
+        const stageClass = `pnode-${tool.stage}`;
+        const activeClass = isActive ? 'active' : '';
+
+        html += `
+            <g class="pnode-group ${stageClass}" data-tool="${tool.id}" style="cursor:pointer">
+                <rect class="pnode-rect ${activeClass}" x="${tool.x}" y="${tool.y}" width="${tool.w}" height="${tool.h}" rx="8"></rect>
+                <text class="pnode-text" x="${cx}" y="${cy - 3}">${escapeXml(t(tool.nameKey))}</text>
             </g>
         `;
+    });
 
-        if (index < FLOW_STEPS.length - 1) {
-            let arrowCls = '';
-            if (index < stepIndex - 1) {
-                arrowCls = 'done';
-            } else if (index === stepIndex - 1) {
-                arrowCls = 'current';
+    svg.innerHTML = html;
+
+    /* Attach click handlers after DOM insert */
+    svg.querySelectorAll('.pnode-group').forEach(g => {
+        g.addEventListener('click', () => {
+            const toolId = g.dataset.tool;
+            showToolDetail(toolId);
+        });
+    });
+}
+
+function showToolDetail(toolId) {
+    const tool = PIPELINE_TOOLS.find(item => item.id === toolId);
+    if (!tool) return;
+
+    activeToolId = toolId;
+    renderPipelineSVG();
+
+    const placeholder = document.getElementById('detail-placeholder');
+    const content = document.getElementById('detail-content');
+    const nameEl = document.getElementById('detail-name');
+    const descEl = document.getElementById('detail-desc');
+    const inputEl = document.getElementById('detail-input');
+    const outputEl = document.getElementById('detail-output');
+
+    if (!placeholder || !content) return;
+
+    placeholder.classList.add('hidden');
+    content.classList.remove('hidden');
+
+    nameEl.textContent = t(tool.nameKey);
+    descEl.textContent = t(tool.descKey);
+    inputEl.textContent = t(tool.inputKey);
+    outputEl.textContent = t(tool.outputKey);
+}
+
+/* ── Journey Tabs & Timeline ── */
+
+function renderJourneyTimeline(tab) {
+    const container = document.getElementById('journey-content');
+    if (!container) return;
+
+    const steps = JOURNEY_STEPS[tab];
+    if (!steps) return;
+
+    const titleKey = `journey.${tab}.title`;
+
+    let html = `<p class="journey-timeline-title">${escapeXml(t(titleKey))}</p>`;
+    html += `<div class="timeline">`;
+
+    steps.forEach((step, index) => {
+        const isLast = index === steps.length - 1;
+        html += `
+            <div class="timeline-step" data-file="${tab}">
+                <div class="step-number-col">
+                    <div class="step-number">${index + 1}</div>
+                    ${!isLast ? '<div class="step-line"></div>' : ''}
+                </div>
+                <div class="step-body">
+                    <div class="step-header">
+                        <span class="step-title">${escapeXml(t(step.titleKey))}</span>
+                        <span class="step-program">${escapeXml(t(step.programKey))}</span>
+                    </div>
+                    <p class="step-desc">${escapeXml(t(step.descKey))}</p>
+                    <span class="step-artifact">${escapeXml(t(step.artifactKey))}</span>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+    container.innerHTML = html;
+}
+
+function setActiveTab(tab) {
+    activeJourneyTab = tab;
+
+    document.querySelectorAll('.journey-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+
+    renderJourneyTimeline(tab);
+}
+
+function initJourneyTabs() {
+    document.querySelectorAll('.journey-tab').forEach(btn => {
+        btn.addEventListener('click', () => setActiveTab(btn.dataset.tab));
+    });
+
+    document.querySelectorAll('.track-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.tab;
+            const journeySection = document.getElementById('journey');
+            if (journeySection) {
+                journeySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
-            svgContent += `
-                <path class="flow-arrow ${arrowCls}" marker-end="url(#flow-arrow-head)"
-                    d="M ${x + nodeW} 72 L ${x + nodeW + gap - 8} 72"></path>
-            `;
-        }
+            setTimeout(() => setActiveTab(tab), 400);
+        });
     });
 
-    const selectedStep = FLOW_STEPS[stepIndex];
-    const inputLines = selectedStep.inputKeys.map((key) => `- ${t(key)}`);
-    const outputLines = selectedStep.outputKeys.map((key) => `- ${t(key)}`);
-
-    svgContent += `
-        <rect class="flow-io-box" x="22" y="140" rx="12" width="1078" height="160"></rect>
-        <text class="flow-io-title" x="44" y="168">${escapeXml(t('flow.inputTitle'))}</text>
-        <text class="flow-io-line">${linesToTspans(inputLines, 44, 190, 20)}</text>
-
-        <text class="flow-io-title" x="568" y="168">${escapeXml(t('flow.outputTitle'))}</text>
-        <text class="flow-io-line">${linesToTspans(outputLines, 568, 190, 20)}</text>
-    `;
-
-    svg.innerHTML = svgContent;
+    renderJourneyTimeline(activeJourneyTab);
 }
 
-function renderFlowStep(stepIndex) {
-    const step = FLOW_STEPS[stepIndex];
+/* ── Language change refresh ── */
 
-    const descriptionEl = document.getElementById('flow-description');
-    const titleNode = descriptionEl.querySelector('h3');
-    const bodyNode = descriptionEl.querySelector('p');
-
-    titleNode.textContent = t(step.titleKey);
-    bodyNode.textContent = t(step.descKey);
-
-    const codeEl = document.getElementById('flow-code-content');
-    codeEl.textContent = getFlowCode(step);
-
-    document.getElementById('flow-prev').disabled = stepIndex === 0;
-    document.getElementById('flow-next').disabled = stepIndex === FLOW_STEPS.length - 1;
-    document.getElementById('flow-indicator').textContent = t('step.indicator', {
-        current: stepIndex + 1,
-        total: FLOW_STEPS.length
-    });
-
-    renderFlowDiagram(stepIndex);
-}
-
-function changeFlowStep(delta) {
-    const next = currentFlowStep + delta;
-    if (next < 0 || next >= FLOW_STEPS.length) {
-        return;
+function refreshDynamicContent() {
+    renderPipelineSVG();
+    renderJourneyTimeline(activeJourneyTab);
+    if (activeToolId) {
+        showToolDetail(activeToolId);
     }
-
-    currentFlowStep = next;
-    renderFlowStep(currentFlowStep);
 }
 
-function initFlowVisualization() {
-    const prevBtn = document.getElementById('flow-prev');
-    const nextBtn = document.getElementById('flow-next');
-    const resetBtn = document.getElementById('flow-reset');
-
-    if (!prevBtn || !nextBtn || !resetBtn) {
-        return;
-    }
-
-    prevBtn.addEventListener('click', () => changeFlowStep(-1));
-    nextBtn.addEventListener('click', () => changeFlowStep(1));
-    resetBtn.addEventListener('click', () => {
-        currentFlowStep = 0;
-        renderFlowStep(currentFlowStep);
-    });
-
-    renderFlowStep(currentFlowStep);
-}
+/* ── Navigation ── */
 
 function initNavigation() {
     const links = Array.from(document.querySelectorAll('.nav-link'));
     const sections = links
-        .map((link) => document.querySelector(link.getAttribute('href')))
+        .map(link => document.querySelector(link.getAttribute('href')))
         .filter(Boolean);
 
-    links.forEach((link) => {
-        link.addEventListener('click', (event) => {
+    links.forEach(link => {
+        link.addEventListener('click', event => {
             event.preventDefault();
             const target = document.querySelector(link.getAttribute('href'));
-            if (!target) {
-                return;
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     });
 
     if ('IntersectionObserver' in window && sections.length > 0) {
-        const observer = new IntersectionObserver((entries) => {
+        const observer = new IntersectionObserver(entries => {
             const visible = entries
-                .filter((entry) => entry.isIntersecting)
+                .filter(e => e.isIntersecting)
                 .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
 
-            if (visible.length === 0) {
-                return;
-            }
+            if (visible.length === 0) return;
 
             const currentId = visible[0].target.id;
-            links.forEach((link) => {
+            links.forEach(link => {
                 link.classList.toggle('active', link.getAttribute('href') === `#${currentId}`);
             });
         }, {
@@ -267,9 +390,11 @@ function initNavigation() {
             threshold: [0.1, 0.25, 0.4, 0.6]
         });
 
-        sections.forEach((section) => observer.observe(section));
+        sections.forEach(section => observer.observe(section));
     }
 }
+
+/* ── Build Command Builder ── */
 
 function updateBuildCommand() {
     const platform = document.getElementById('platform-input').value.trim();
@@ -284,43 +409,28 @@ function updateBuildCommand() {
 
     const cmd = ['build'];
 
-    if (platform) {
-        cmd.push(`-p ${platform}`);
-    }
-
-    if (mode === 'module' && modulePath) {
-        cmd.push(`-m ${modulePath}`);
-    }
-
+    if (platform) cmd.push(`-p ${platform}`);
+    if (mode === 'module' && modulePath) cmd.push(`-m ${modulePath}`);
     cmd.push(`-a ${arch}`);
     cmd.push(`-b ${target}`);
     cmd.push(`-t ${toolchain}`);
-
-    if (useFdf && fdfPath) {
-        cmd.push(`-f ${fdfPath}`);
-    }
-
-    if (addFds) {
-        cmd.push('fds');
-    }
+    if (useFdf && fdfPath) cmd.push(`-f ${fdfPath}`);
+    if (addFds) cmd.push('fds');
 
     const output = document.getElementById('build-command-output');
-    output.textContent = `${t('command.generated')}\n${cmd.join(' ')}`;
+    if (output) {
+        output.textContent = `${t('command.generated')}\n${cmd.join(' \\\n    ')}`;
+    }
 }
 
 function initBuildCommandBuilder() {
     const modeSelect = document.getElementById('mode-select');
     const moduleField = document.getElementById('module-field');
+    if (!modeSelect) return;
+
     const controls = [
-        'platform-input',
-        'arch-select',
-        'target-select',
-        'toolchain-select',
-        'mode-select',
-        'module-input',
-        'fdf-input',
-        'fdf-enable',
-        'fds-enable'
+        'platform-input', 'arch-select', 'target-select', 'toolchain-select',
+        'mode-select', 'module-input', 'fdf-input', 'fdf-enable', 'fds-enable'
     ];
 
     modeSelect.addEventListener('change', () => {
@@ -328,8 +438,9 @@ function initBuildCommandBuilder() {
         updateBuildCommand();
     });
 
-    controls.forEach((id) => {
+    controls.forEach(id => {
         const el = document.getElementById(id);
+        if (!el) return;
         const evt = (el.type === 'checkbox' || el.tagName === 'SELECT') ? 'change' : 'input';
         el.addEventListener(evt, updateBuildCommand);
     });
@@ -338,28 +449,12 @@ function initBuildCommandBuilder() {
     updateBuildCommand();
 }
 
-function initKeyboardShortcuts() {
-    document.addEventListener('keydown', (event) => {
-        if (event.altKey || event.ctrlKey || event.metaKey) {
-            return;
-        }
-
-        if (event.key === 'ArrowLeft') {
-            changeFlowStep(-1);
-            event.preventDefault();
-        }
-
-        if (event.key === 'ArrowRight') {
-            changeFlowStep(1);
-            event.preventDefault();
-        }
-    });
-}
+/* ── Init ── */
 
 document.addEventListener('DOMContentLoaded', () => {
     initI18n();
     initNavigation();
-    initFlowVisualization();
+    renderPipelineSVG();
+    initJourneyTabs();
     initBuildCommandBuilder();
-    initKeyboardShortcuts();
 });
