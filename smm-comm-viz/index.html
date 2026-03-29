@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMM/MM Communication Visualizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ambient background orbs -->
+<div class="bg-orb orb-a"></div>
+<div class="bg-orb orb-b"></div>
+
+<!-- ===== top navigation ===== -->
+<nav class="top-nav">
+    <a href="../index.html" class="back-link" data-i18n="nav.back">&larr; Back to Tools</a>
+    <div class="nav-links">
+        <a href="#overview"     class="nav-link active" data-i18n="nav.overview">Overview</a>
+        <a href="#architecture" class="nav-link" data-i18n="nav.architecture">Architecture</a>
+        <a href="#trigger"      class="nav-link" data-i18n="nav.trigger">SMI Trigger</a>
+        <a href="#flow"         class="nav-link" data-i18n="nav.flow">Comm Flow</a>
+        <a href="#buffer"       class="nav-link" data-i18n="nav.buffer">Buffer Layout</a>
+        <a href="#handler"      class="nav-link" data-i18n="nav.handler">Handler Reg.</a>
+        <a href="#standalone"   class="nav-link" data-i18n="nav.standalone">Standalone MM</a>
+        <a href="#code"         class="nav-link" data-i18n="nav.code">Code</a>
+        <a href="#references"   class="nav-link" data-i18n="nav.references">References</a>
+    </div>
+    <div class="lang-switcher">
+        <button class="lang-btn" data-lang="zh-TW" title="繁體中文">中文</button>
+        <button class="lang-btn" data-lang="en"    title="English">EN</button>
+    </div>
+</nav>
+
+<!-- ========================================================= -->
+<!-- SECTION : Overview                                        -->
+<!-- ========================================================= -->
+<section id="overview" class="section hero">
+    <h1 data-i18n="overview.title">SMM/MM Communication Overview</h1>
+    <p class="section-subtitle" data-i18n="overview.subtitle">Understanding how DXE triggers and communicates with SMM</p>
+
+    <!-- communication phase timeline -->
+    <div class="phase-timeline">
+        <div class="phase-item dxe-phase"><span data-i18n="phase.dxe">DXE Driver</span></div>
+        <div class="phase-arrow">&rarr;</div>
+        <div class="phase-item dxe-phase"><span data-i18n="phase.comm">Prepare Comm Buffer</span></div>
+        <div class="phase-arrow">&rarr;</div>
+        <div class="phase-item smi-phase highlight"><span data-i18n="phase.smi">Trigger SMI</span></div>
+        <div class="phase-arrow">&rarr;</div>
+        <div class="phase-item smm-phase"><span data-i18n="phase.smm">SMM Processing</span></div>
+        <div class="phase-arrow">&rarr;</div>
+        <div class="phase-item ret-phase"><span data-i18n="phase.ret">Return Result</span></div>
+    </div>
+
+    <!-- three info cards -->
+    <div class="info-grid">
+        <div class="info-card">
+            <div class="info-icon smm-icon">S</div>
+            <h3 data-i18n="overview.what.title">What is SMM?</h3>
+            <p  data-i18n="overview.what.desc"></p>
+        </div>
+        <div class="info-card">
+            <div class="info-icon comm-icon">C</div>
+            <h3 data-i18n="overview.why.title">Why SMM Communication?</h3>
+            <p  data-i18n="overview.why.desc"></p>
+        </div>
+        <div class="info-card">
+            <div class="info-icon mm-icon">M</div>
+            <h3 data-i18n="overview.standalone.title">What is Standalone MM?</h3>
+            <p  data-i18n="overview.standalone.desc"></p>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : Memory Architecture                             -->
+<!-- ========================================================= -->
+<section id="architecture" class="section panel">
+    <h2 data-i18n="arch.title">Memory Architecture</h2>
+    <p class="section-subtitle" data-i18n="arch.subtitle">Memory regions involved in DXE-SMM communication</p>
+
+    <div id="arch-diagram" class="diagram-container"></div>
+
+    <div class="arch-cards">
+        <div class="arch-card dram-card">
+            <h3 data-i18n="arch.dram.title">Normal DRAM</h3>
+            <p  data-i18n="arch.dram.desc"></p>
+        </div>
+        <div class="arch-card smram-card">
+            <h3 data-i18n="arch.smram.title">SMRAM (TSEG)</h3>
+            <p  data-i18n="arch.smram.desc"></p>
+        </div>
+        <div class="arch-card comm-card">
+            <h3 data-i18n="arch.comm.title">Communication Buffer</h3>
+            <p  data-i18n="arch.comm.desc"></p>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : SMI Trigger Mechanism                           -->
+<!-- ========================================================= -->
+<section id="trigger" class="section panel">
+    <h2 data-i18n="trigger.title">SMI Trigger Mechanism</h2>
+    <p class="section-subtitle" data-i18n="trigger.subtitle">Understanding how System Management Interrupts trigger SMM</p>
+
+    <div id="trigger-diagram" class="diagram-container"></div>
+
+    <div class="arch-cards">
+        <div class="arch-card" style="background:var(--smm-bg); border-color:rgba(239,68,68,0.18);">
+            <h3 style="color:var(--smm-color);" data-i18n="trigger.swsmi.title">Software SMI</h3>
+            <p data-i18n="trigger.swsmi.desc"></p>
+        </div>
+        <div class="arch-card" style="background:var(--cpu-bg); border-color:rgba(167,139,250,0.18);">
+            <h3 style="color:var(--cpu-color);" data-i18n="trigger.hwsmi.title">Hardware SMI</h3>
+            <p data-i18n="trigger.hwsmi.desc"></p>
+        </div>
+        <div class="arch-card" style="background:var(--mm-bg); border-color:rgba(34,211,238,0.18);">
+            <h3 style="color:var(--mm-color);" data-i18n="trigger.entry.title">SMM Entry Flow</h3>
+            <p data-i18n="trigger.entry.desc"></p>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : Communication Flow (interactive step-by-step)   -->
+<!-- ========================================================= -->
+<section id="flow" class="section panel">
+    <h2 data-i18n="flow.title">Communication Flow</h2>
+    <p class="section-subtitle" data-i18n="flow.subtitle">Step-by-step walkthrough of DXE-SMM communication</p>
+
+    <div class="step-controls">
+        <button id="flow-prev" class="step-btn" disabled>&larr; Prev</button>
+        <span id="flow-indicator">Step 1 / 8</span>
+        <button id="flow-next" class="step-btn">Next &rarr;</button>
+        <button id="flow-reset" class="step-btn reset">Reset</button>
+    </div>
+
+    <div id="flow-diagram" class="diagram-container flow-diagram-container"></div>
+
+    <div id="flow-description" class="step-description">
+        <h3 id="flow-step-title"></h3>
+        <p  id="flow-step-desc"></p>
+        <p  id="flow-step-detail" class="step-detail"></p>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : Communication Buffer Internals                  -->
+<!-- ========================================================= -->
+<section id="buffer" class="section panel">
+    <h2 data-i18n="buffer.title">Communication Buffer Internals</h2>
+    <p class="section-subtitle" data-i18n="buffer.subtitle">Understanding the EFI_SMM_COMMUNICATE_HEADER structure</p>
+
+    <p class="buffer-intro" data-i18n="buffer.desc"></p>
+
+    <div class="struct-box">
+        <code data-i18n="buffer.struct">EFI_SMM_COMMUNICATE_HEADER { HeaderGuid, MessageLength, Data[] }</code>
+    </div>
+
+    <div id="buffer-diagram" class="diagram-container"></div>
+
+    <div class="buffer-cards">
+        <div class="buffer-card">
+            <h3 data-i18n="buffer.guid.title">HeaderGuid</h3>
+            <p  data-i18n="buffer.guid.desc"></p>
+        </div>
+        <div class="buffer-card">
+            <h3 data-i18n="buffer.len.title">MessageLength</h3>
+            <p  data-i18n="buffer.len.desc"></p>
+        </div>
+        <div class="buffer-card">
+            <h3 data-i18n="buffer.data.title">Data[]</h3>
+            <p  data-i18n="buffer.data.desc"></p>
+        </div>
+        <div class="buffer-card">
+            <h3 data-i18n="buffer.validation.title">Buffer Validation</h3>
+            <p  data-i18n="buffer.validation.desc"></p>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : Handler Registration                            -->
+<!-- ========================================================= -->
+<section id="handler" class="section panel">
+    <h2 data-i18n="handler.title">SMI Handler Registration</h2>
+    <p class="section-subtitle" data-i18n="handler.subtitle">How SMM drivers register handlers</p>
+
+    <div class="arch-cards">
+        <div class="arch-card" style="background:var(--smm-bg); border-color:rgba(239,68,68,0.18);">
+            <h3 style="color:var(--smm-color);" data-i18n="handler.guid.title">GUID-Based Handler</h3>
+            <p data-i18n="handler.guid.desc"></p>
+        </div>
+        <div class="arch-card" style="background:var(--comm-bg); border-color:rgba(251,191,36,0.18);">
+            <h3 style="color:var(--comm-color);" data-i18n="handler.sw.title">SW SMI Number Handler</h3>
+            <p data-i18n="handler.sw.desc"></p>
+        </div>
+        <div class="arch-card" style="background:var(--cpu-bg); border-color:rgba(167,139,250,0.18);">
+            <h3 style="color:var(--cpu-color);" data-i18n="handler.root.title">Root SMI Handler</h3>
+            <p data-i18n="handler.root.desc"></p>
+        </div>
+    </div>
+
+    <div class="buffer-cards" style="margin-top:28px;">
+        <div class="buffer-card" style="grid-column: 1 / -1;">
+            <h3 data-i18n="handler.lifecycle.title">SMM Driver Lifecycle</h3>
+            <p  data-i18n="handler.lifecycle.desc"></p>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : Standalone MM vs Traditional MM                 -->
+<!-- ========================================================= -->
+<section id="standalone" class="section panel">
+    <h2 data-i18n="standalone.title">Standalone MM vs Traditional MM</h2>
+    <p class="section-subtitle" data-i18n="standalone.subtitle">Understanding the differences</p>
+
+    <div class="compare-grid">
+        <div class="compare-card traditional">
+            <h3 data-i18n="standalone.traditional.title">Traditional MM</h3>
+            <ul id="traditional-list"></ul>
+        </div>
+        <div class="compare-card standalone">
+            <h3 data-i18n="standalone.standalone.title">Standalone MM</h3>
+            <ul id="standalone-list"></ul>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : Code Deep-Dive                                  -->
+<!-- ========================================================= -->
+<section id="code" class="section panel">
+    <h2 data-i18n="code.title">Key Code Analysis</h2>
+    <p class="section-subtitle" data-i18n="code.subtitle">Core SMM communication implementation in EDK2</p>
+
+    <div class="code-blocks">
+        <!-- block 1 -->
+        <div class="code-block">
+            <h3 data-i18n="code.communicate.title">SmmCommunicationCommunicate()</h3>
+            <p  data-i18n="code.communicate.desc"></p>
+            <pre><code>// MdeModulePkg/Core/PiSmmIpl/PiSmmIpl.c
+EFI_STATUS
+EFIAPI
+SmmCommunicationCommunicate (
+  IN CONST EFI_SMM_COMMUNICATION_PROTOCOL  *This,
+  IN OUT VOID                              *CommBuffer,
+  IN OUT UINTN                             *CommSize OPTIONAL
+  )
+{
+  //
+  // Validate CommBuffer and CommSize
+  //
+  CommunicateHeader = (EFI_SMM_COMMUNICATE_HEADER *)CommBuffer;
+  ...
+
+  //
+  // Save the comm buffer pointer in a well-known SMRAM location
+  // so SMM Core can find it after SMI
+  //
+  gSmmCorePrivate->CommunicationBuffer = CommBuffer;
+  gSmmCorePrivate->BufferSize          = TempCommSize;
+
+  //
+  // Trigger Software SMI via I/O port 0xB2
+  //
+  IoWrite8 (0xB2, gSmmCorePrivate->SwSmiValue);
+
+  //
+  // After RSM, execution resumes here
+  // Return status is already in CommBuffer
+  //
+  return gSmmCorePrivate->ReturnStatus;
+}</code></pre>
+        </div>
+
+        <!-- block 2 -->
+        <div class="code-block">
+            <h3 data-i18n="code.entrypoint.title">SmmEntryPoint()</h3>
+            <p  data-i18n="code.entrypoint.desc"></p>
+            <pre><code>// MdeModulePkg/Core/PiSmmCore/PiSmmCore.c
+VOID
+EFIAPI
+SmmEntryPoint (
+  IN CONST EFI_SMM_ENTRY_CONTEXT  *SmmEntryContext
+  )
+{
+  //
+  // Save the entry context for later use
+  //
+  gSmmCorePrivate->SmmEntryContext = SmmEntryContext;
+
+  //
+  // Check if this SMI was triggered by Communicate()
+  //
+  if (gSmmCorePrivate->CommunicationBuffer != NULL) {
+    CommunicateHeader = (EFI_SMM_COMMUNICATE_HEADER *)
+                          gSmmCorePrivate->CommunicationBuffer;
+
+    //
+    // Validate buffer is outside SMRAM
+    //
+    BufferSize = GetCommBufferSize (CommunicateHeader);
+    if (!SmmIsBufferOutsideSmmValid (
+           (UINTN)CommunicateHeader, BufferSize)) {
+      gSmmCorePrivate->ReturnStatus = EFI_ACCESS_DENIED;
+      return;
+    }
+
+    //
+    // Dispatch to registered handler by GUID
+    //
+    gSmmCorePrivate->ReturnStatus = SmiManage (
+      &CommunicateHeader->HeaderGuid,
+      NULL,
+      CommunicateHeader->Data,
+      &CommunicateHeader->MessageLength
+      );
+  }
+  //
+  // Also dispatch root SMI handlers (NULL GUID)
+  //
+  SmiManage (NULL, NULL, NULL, NULL);
+}</code></pre>
+        </div>
+
+        <!-- block 3 -->
+        <div class="code-block">
+            <h3 data-i18n="code.smimanage.title">SmiManage()</h3>
+            <p  data-i18n="code.smimanage.desc"></p>
+            <pre><code>// MdeModulePkg/Core/PiSmmCore/Smi.c
+EFI_STATUS
+EFIAPI
+SmiManage (
+  IN CONST EFI_GUID  *HandlerType,
+  IN CONST VOID      *Context      OPTIONAL,
+  IN OUT VOID        *CommBuffer   OPTIONAL,
+  IN OUT UINTN       *CommBufferSize OPTIONAL
+  )
+{
+  //
+  // Find the handler list for this GUID
+  //
+  List = SmmCoreFindSmiEntry (HandlerType);
+  if (List == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  //
+  // Walk through all registered handlers
+  //
+  for (Link = List->SmiHandlers.ForwardLink;
+       Link != &List->SmiHandlers;
+       Link = Link->ForwardLink) {
+
+    SmiHandler = CR (Link, SMI_HANDLER, Link, SMI_HANDLER_SIGNATURE);
+
+    Status = SmiHandler->Handler (
+               SmiHandler->DispatchHandle,
+               Context,
+               CommBuffer,
+               CommBufferSize
+               );
+
+    if (Status != EFI_WARN_INTERRUPT_SOURCE_QUIESCED) {
+      SuccessReturn = TRUE;
+    }
+  }
+
+  return SuccessReturn ? EFI_SUCCESS : EFI_INTERRUPT_PENDING;
+}</code></pre>
+        </div>
+
+        <!-- block 4 -->
+        <div class="code-block">
+            <h3 data-i18n="code.register.title">SmiHandlerRegister() Example</h3>
+            <p  data-i18n="code.register.desc"></p>
+            <pre><code>// Example SMM Driver registering a communication handler
+#include &lt;Protocol/SmmCommunication.h&gt;
+
+EFI_GUID gMyHandlerGuid = { 0x12345678, 0xABCD, ... };
+EFI_HANDLE  mDispatchHandle = NULL;
+
+EFI_STATUS
+EFIAPI
+MySmiHandler (
+  IN EFI_HANDLE  DispatchHandle,
+  IN CONST VOID  *Context        OPTIONAL,
+  IN OUT VOID    *CommBuffer     OPTIONAL,
+  IN OUT UINTN   *CommBufferSize OPTIONAL
+  )
+{
+  MY_REQUEST  *Request;
+
+  if (CommBuffer == NULL || CommBufferSize == NULL) {
+    return EFI_SUCCESS;
+  }
+
+  //
+  // Validate buffer is outside SMRAM
+  //
+  if (!SmmIsBufferOutsideSmmValid (
+         (UINTN)CommBuffer, *CommBufferSize)) {
+    return EFI_ACCESS_DENIED;
+  }
+
+  Request = (MY_REQUEST *)CommBuffer;
+
+  //
+  // Process request and write response
+  //
+  switch (Request->Operation) {
+    case OP_READ:
+      Request->Status = DoSecureRead (Request);
+      break;
+    case OP_WRITE:
+      Request->Status = DoSecureWrite (Request);
+      break;
+  }
+
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+EFIAPI
+MyDriverEntryPoint (
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
+{
+  //
+  // Register GUID-based SMI handler
+  //
+  gSmst->SmiHandlerRegister (
+           MySmiHandler,
+           &gMyHandlerGuid,
+           &mDispatchHandle
+           );
+
+  return EFI_SUCCESS;
+}</code></pre>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : References                                      -->
+<!-- ========================================================= -->
+<section id="references" class="section panel">
+    <h2 data-i18n="ref.title">References</h2>
+    <p class="section-subtitle" data-i18n="ref.subtitle">Resources for deeper learning</p>
+
+    <div class="ref-grid">
+        <a class="ref-card" href="https://uefi.org/specifications" target="_blank" rel="noopener">
+            <h3 data-i18n="ref.spec">PI Specification</h3>
+            <p  data-i18n="ref.spec.desc"></p>
+        </a>
+        <a class="ref-card" href="https://github.com/tianocore/edk2/tree/master/MdeModulePkg/Core/PiSmmCore" target="_blank" rel="noopener">
+            <h3 data-i18n="ref.edk2">EDK2 SMM Core Source</h3>
+            <p  data-i18n="ref.edk2.desc"></p>
+        </a>
+        <a class="ref-card" href="https://github.com/tianocore/edk2/tree/master/MdeModulePkg/Core/PiSmmIpl" target="_blank" rel="noopener">
+            <h3 data-i18n="ref.ipl">PiSmmIpl Source</h3>
+            <p  data-i18n="ref.ipl.desc"></p>
+        </a>
+        <a class="ref-card" href="https://github.com/tianocore/edk2/tree/master/StandaloneMmPkg" target="_blank" rel="noopener">
+            <h3 data-i18n="ref.standalone">Standalone MM Core</h3>
+            <p  data-i18n="ref.standalone.desc"></p>
+        </a>
+    </div>
+</section>
+
+<footer>
+    <p>
+        <a href="https://github.com/tianocore/edk2" target="_blank">EDK2 Source</a> &bull;
+        <a href="https://uefi.org/specifications" target="_blank">UEFI Specifications</a> &bull;
+        <a href="https://github.com/Damien-Chen" target="_blank">GitHub</a>
+    </p>
+    <p style="margin-top:12px;">&copy; 2025 Damien Chen. All rights reserved.</p>
+</footer>
+
+<script src="i18n.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

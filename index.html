@@ -98,6 +98,10 @@
             background: linear-gradient(135deg, #e8a838 0%, #58a6ff 100%);
         }
 
+        .tool-card:nth-child(5) .tool-icon {
+            background: linear-gradient(135deg, #ef4444 0%, #22d3ee 100%);
+        }
+
         .tool-title {
             font-size: 1.5rem;
             font-weight: 600;
@@ -140,6 +144,11 @@
         .tool-card:nth-child(4) .tag {
             background: rgba(232, 168, 56, 0.12);
             color: #e8a838;
+        }
+
+        .tool-card:nth-child(5) .tag {
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
         }
 
         footer {
@@ -274,6 +283,27 @@
                     <span class="tag">XIP &rarr; DRAM</span>
                     <span class="tag">CAR</span>
                     <span class="tag">Pointer Fixup</span>
+                </div>
+                <div class="nav-hint">
+                    <span>Open Tool</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </div>
+            </a>
+            <a href="smm-comm-viz/index.html" class="tool-card">
+                <div class="tool-icon">&#x1F510;</div>
+                <h2 class="tool-title">SMM/MM Communication Visualizer</h2>
+                <p class="tool-description">
+                    Interactive visualization of how DXE triggers and communicates with SMM
+                    (System Management Mode) or Standalone MM, including communication protocol
+                    internals, SMRAM memory layout, SMI trigger mechanism, and handler registration.
+                </p>
+                <div class="tool-tags">
+                    <span class="tag">SMM / SMI</span>
+                    <span class="tag">Communicate()</span>
+                    <span class="tag">SMRAM</span>
+                    <span class="tag">Standalone MM</span>
                 </div>
                 <div class="nav-hint">
                     <span>Open Tool</span>

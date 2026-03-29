@@ -40,6 +40,19 @@ Interactive visualization of the PEI Core shadow process during UEFI boot:
 
 Supports both English and Traditional Chinese (繁體中文).
 
+### 5. SMM/MM Communication Visualizer
+Interactive visualization of how DXE triggers and communicates with SMM/Standalone MM:
+- **Overview**: What SMM is, why communication is needed, and Standalone MM introduction
+- **Memory Architecture**: Normal DRAM, SMRAM/TSEG, and Communication Buffer layout
+- **SMI Trigger**: SW SMI via I/O port 0xB2, CPU state save, SMBASE entry, RSM return
+- **Communication Flow**: 8-step interactive walkthrough from LocateProtocol to RSM return
+- **Buffer Internals**: EFI_SMM_COMMUNICATE_HEADER structure (GUID + MessageLength + Data)
+- **Handler Registration**: GUID-based, SW SMI number, and Root SMI handlers
+- **Standalone MM**: Side-by-side comparison of Traditional MM vs Standalone MM
+- **Code Analysis**: Key EDK2 source from PiSmmIpl, PiSmmCore, and SmiManage
+
+Supports both English and Traditional Chinese (繁體中文).
+
 ## Deployment
 
 This project is configured for automatic deployment to GitHub Pages.
@@ -84,6 +97,11 @@ uefi-dev-tools/
 │   ├── script.js
 │   └── i18n.js
 ├── pei-shadow-viz/         # PEI Shadow Process Visualizer
+│   ├── index.html
+│   ├── styles.css
+│   ├── script.js
+│   └── i18n.js
+├── smm-comm-viz/           # SMM/MM Communication Visualizer
 │   ├── index.html
 │   ├── styles.css
 │   ├── script.js
