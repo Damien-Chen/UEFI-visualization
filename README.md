@@ -53,6 +53,18 @@ Interactive visualization of how DXE triggers and communicates with SMM/Standalo
 
 Supports both English and Traditional Chinese (繁體中文).
 
+### 6. PCI Subsystem Visualizer
+Interactive visualization of the UEFI EDK2 PCI subsystem covering both x86_64 and ARM64:
+- **PCI Configuration Space**: Full 256-byte Type 0/Type 1 header register map with hoverable fields, plus 4K PCIe Extended Config Space
+- **Access Mechanism**: Legacy CF8h/CFCh I/O ports vs ECAM/MMCONFIG memory-mapped access, with ECAM address calculation formula
+- **PCI Enumeration**: 11-step interactive walkthrough of PciBusDxe — from Host Bridge creation to device enable
+- **Root Bridge IO Protocol**: Protocol layering diagram, producer/consumer architecture, function table
+- **PCI IO Protocol**: Device-level abstraction call chain from driver → PciIo → RootBridgeIo → hardware
+- **Architecture Comparison**: Side-by-side x86_64 vs ARM64 comparison table (access methods, libraries, interrupts, IOMMU)
+- **Code Analysis**: Key EDK2 source snippets — bus scan, BAR sizing, PCI IO usage, Root Bridge IO ECAM path
+
+Supports both English and Traditional Chinese (繁體中文).
+
 ## Deployment
 
 This project is configured for automatic deployment to GitHub Pages.
@@ -102,6 +114,11 @@ uefi-dev-tools/
 │   ├── script.js
 │   └── i18n.js
 ├── smm-comm-viz/           # SMM/MM Communication Visualizer
+│   ├── index.html
+│   ├── styles.css
+│   ├── script.js
+│   └── i18n.js
+├── pci-viz/                # PCI Subsystem Visualizer
 │   ├── index.html
 │   ├── styles.css
 │   ├── script.js

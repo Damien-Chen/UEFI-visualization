@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCI Subsystem Visualizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ambient background orbs -->
+<div class="bg-orb orb-a"></div>
+<div class="bg-orb orb-b"></div>
+
+<!-- ===== top navigation ===== -->
+<nav class="top-nav">
+    <a href="../index.html" class="back-link" data-i18n="nav.back">&larr; Back to Tools</a>
+    <div class="nav-links">
+        <a href="#overview"      class="nav-link active" data-i18n="nav.overview">Overview</a>
+        <a href="#config-space"  class="nav-link" data-i18n="nav.configspace">Config Space</a>
+        <a href="#access"        class="nav-link" data-i18n="nav.access">Access</a>
+        <a href="#enumeration"   class="nav-link" data-i18n="nav.enumeration">Enumeration</a>
+        <a href="#root-bridge"   class="nav-link" data-i18n="nav.rootbridge">Root Bridge IO</a>
+        <a href="#pci-io"        class="nav-link" data-i18n="nav.pciio">PCI IO</a>
+        <a href="#arch-compare"  class="nav-link" data-i18n="nav.archcompare">Arch Compare</a>
+        <a href="#code"          class="nav-link" data-i18n="nav.code">Code</a>
+        <a href="#references"    class="nav-link" data-i18n="nav.references">References</a>
+    </div>
+    <div class="lang-switcher">
+        <button class="lang-btn" data-lang="zh-TW" title="繁體中文">中文</button>
+        <button class="lang-btn" data-lang="en"    title="English">EN</button>
+    </div>
+</nav>
+
+<!-- ========================================================= -->
+<!-- SECTION : Overview                                        -->
+<!-- ========================================================= -->
+<section id="overview" class="section hero">
+    <h1 data-i18n="overview.title">UEFI PCI Subsystem Overview</h1>
+    <p class="section-subtitle" data-i18n="overview.subtitle">Understanding how UEFI EDK2 discovers, enumerates, and manages PCI/PCIe devices</p>
+
+    <!-- PCI phase timeline -->
+    <div class="phase-timeline">
+        <div class="phase-item pei-phase"><span data-i18n="phase.pei">PEI Phase</span></div>
+        <div class="phase-arrow">&rarr;</div>
+        <div class="phase-item dxe-phase highlight"><span data-i18n="phase.dxe">DXE Enum</span></div>
+        <div class="phase-arrow">&rarr;</div>
+        <div class="phase-item assign-phase"><span data-i18n="phase.assign">Resource Alloc</span></div>
+        <div class="phase-arrow">&rarr;</div>
+        <div class="phase-item driver-phase"><span data-i18n="phase.driver">Driver Install</span></div>
+        <div class="phase-arrow">&rarr;</div>
+        <div class="phase-item bds-phase"><span data-i18n="phase.bds">BDS Boot</span></div>
+    </div>
+
+    <!-- three info cards -->
+    <div class="info-grid">
+        <div class="info-card">
+            <div class="info-icon pci-icon">P</div>
+            <h3 data-i18n="overview.what.title">What is PCI/PCIe?</h3>
+            <p  data-i18n="overview.what.desc"></p>
+        </div>
+        <div class="info-card">
+            <div class="info-icon bridge-icon">B</div>
+            <h3 data-i18n="overview.why.title">Why should BIOS engineers understand PCI?</h3>
+            <p  data-i18n="overview.why.desc"></p>
+        </div>
+        <div class="info-card">
+            <div class="info-icon arch-icon">A</div>
+            <h3 data-i18n="overview.arch.title">x86_64 vs ARM64</h3>
+            <p  data-i18n="overview.arch.desc"></p>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : PCI Configuration Space                         -->
+<!-- ========================================================= -->
+<section id="config-space" class="section panel">
+    <h2 data-i18n="config.title">PCI Configuration Space</h2>
+    <p class="section-subtitle" data-i18n="config.subtitle">Full 256-byte PCI header and 4K PCIe Extended Configuration Space</p>
+
+    <div class="config-toggle">
+        <button class="config-toggle-btn active" data-view="type0" data-i18n="config.toggle.type0">Type 0 (Endpoint)</button>
+        <button class="config-toggle-btn" data-view="type1" data-i18n="config.toggle.type1">Type 1 (Bridge)</button>
+        <button class="config-toggle-btn" data-view="extended" data-i18n="config.toggle.extended">PCIe Extended</button>
+    </div>
+
+    <div id="config-diagram" class="diagram-container"></div>
+
+    <div class="config-cards">
+        <div class="config-card type0-card">
+            <h3 data-i18n="config.type0.title">Type 0 Header (Endpoint Device)</h3>
+            <p  data-i18n="config.type0.desc"></p>
+        </div>
+        <div class="config-card type1-card">
+            <h3 data-i18n="config.type1.title">Type 1 Header (PCI Bridge)</h3>
+            <p  data-i18n="config.type1.desc"></p>
+        </div>
+        <div class="config-card ext-card">
+            <h3 data-i18n="config.extended.title">PCIe Extended Config Space</h3>
+            <p  data-i18n="config.extended.desc"></p>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : Config Space Access Mechanism                    -->
+<!-- ========================================================= -->
+<section id="access" class="section panel">
+    <h2 data-i18n="access.title">Configuration Space Access Mechanism</h2>
+    <p class="section-subtitle" data-i18n="access.subtitle">How x86 and ARM platforms read/write PCI configuration space</p>
+
+    <div id="access-diagram" class="diagram-container"></div>
+
+    <div class="formula-box">
+        <code data-i18n="access.formula">ECAM_BASE + (Bus &lt;&lt; 20) + (Dev &lt;&lt; 15) + (Fun &lt;&lt; 12) + Offset</code>
+    </div>
+
+    <h3 style="margin-bottom: 1rem; color: var(--text);" data-i18n="access.x86.title">x86_64 Access Methods</h3>
+    <div class="arch-cards">
+        <div class="arch-card" style="background:var(--pci-bg); border-color:rgba(249,115,22,0.18);">
+            <h3 style="color:var(--pci-color);" data-i18n="access.legacy.title">Legacy I/O Port (CF8h/CFCh)</h3>
+            <p data-i18n="access.legacy.desc"></p>
+        </div>
+        <div class="arch-card" style="background:var(--ecam-bg); border-color:rgba(56,189,248,0.18);">
+            <h3 style="color:var(--ecam-color);" data-i18n="access.ecam.title">ECAM / MMCONFIG</h3>
+            <p data-i18n="access.ecam.desc"></p>
+        </div>
+    </div>
+
+    <h3 style="margin: 2rem 0 1rem; color: var(--text);" data-i18n="access.arm.title">ARM64 Access Method</h3>
+    <div class="arch-cards">
+        <div class="arch-card" style="background:var(--arm-bg); border-color:rgba(74,222,128,0.18);">
+            <h3 style="color:var(--arm-color);" data-i18n="access.arm.ecam.title">Pure ECAM (Memory-Mapped)</h3>
+            <p data-i18n="access.arm.ecam.desc"></p>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : PCI Enumeration (interactive step-by-step)      -->
+<!-- ========================================================= -->
+<section id="enumeration" class="section panel">
+    <h2 data-i18n="enum.title">PCI Enumeration Flow</h2>
+    <p class="section-subtitle" data-i18n="enum.subtitle">Complete device discovery and resource allocation flow in PciBusDxe</p>
+
+    <div class="step-controls">
+        <button id="enum-prev" class="step-btn" disabled>&larr; Prev</button>
+        <span id="enum-indicator">Step 1 / 11</span>
+        <button id="enum-next" class="step-btn">Next &rarr;</button>
+        <button id="enum-reset" class="step-btn reset">Reset</button>
+    </div>
+
+    <div id="enum-diagram" class="diagram-container flow-diagram-container"></div>
+
+    <div id="enum-description" class="step-description">
+        <h3 id="enum-step-title"></h3>
+        <p  id="enum-step-desc"></p>
+        <p  id="enum-step-detail" class="step-detail"></p>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : PCI Root Bridge IO Protocol                     -->
+<!-- ========================================================= -->
+<section id="root-bridge" class="section panel">
+    <h2 data-i18n="rb.title">PCI Root Bridge IO Protocol</h2>
+    <p class="section-subtitle" data-i18n="rb.subtitle">Platform-level PCI access abstraction</p>
+
+    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+        <span class="proto-label producer" data-i18n="rb.producer">Producer: PciHostBridgeDxe (platform-specific)</span>
+        <span class="proto-label consumer" data-i18n="rb.consumer">Consumer: PciBusDxe, Option ROM loader</span>
+    </div>
+
+    <p class="proto-desc" data-i18n="rb.desc"></p>
+
+    <div id="rootbridge-diagram" class="diagram-container"></div>
+
+    <div class="proto-cards">
+        <div class="proto-card">
+            <h3 data-i18n="rb.pci.title">Pci.Read / Pci.Write</h3>
+            <p  data-i18n="rb.pci.desc"></p>
+        </div>
+        <div class="proto-card">
+            <h3 data-i18n="rb.mem.title">Mem.Read / Mem.Write</h3>
+            <p  data-i18n="rb.mem.desc"></p>
+        </div>
+        <div class="proto-card">
+            <h3 data-i18n="rb.io.title">Io.Read / Io.Write</h3>
+            <p  data-i18n="rb.io.desc"></p>
+        </div>
+        <div class="proto-card">
+            <h3 data-i18n="rb.map.title">Map / Unmap</h3>
+            <p  data-i18n="rb.map.desc"></p>
+        </div>
+        <div class="proto-card">
+            <h3 data-i18n="rb.alloc.title">AllocateBuffer / FreeBuffer</h3>
+            <p  data-i18n="rb.alloc.desc"></p>
+        </div>
+        <div class="proto-card">
+            <h3 data-i18n="rb.config.title">Configuration</h3>
+            <p  data-i18n="rb.config.desc"></p>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : PCI IO Protocol                                 -->
+<!-- ========================================================= -->
+<section id="pci-io" class="section panel">
+    <h2 data-i18n="pciio.title">PCI IO Protocol</h2>
+    <p class="section-subtitle" data-i18n="pciio.subtitle">Device-level PCI access interface</p>
+
+    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+        <span class="proto-label producer" data-i18n="pciio.producer">Producer: PciBusDxe (auto-installed per device)</span>
+        <span class="proto-label consumer" data-i18n="pciio.consumer">Consumer: Device drivers (NVMe, USB, NIC, GOP, etc.)</span>
+    </div>
+
+    <p class="proto-desc" data-i18n="pciio.desc"></p>
+
+    <div id="pciio-diagram" class="diagram-container"></div>
+
+    <div class="proto-cards">
+        <div class="proto-card">
+            <h3 data-i18n="pciio.pci.title">Pci.Read / Pci.Write</h3>
+            <p  data-i18n="pciio.pci.desc"></p>
+        </div>
+        <div class="proto-card">
+            <h3 data-i18n="pciio.mem.title">Mem.Read / Mem.Write</h3>
+            <p  data-i18n="pciio.mem.desc"></p>
+        </div>
+        <div class="proto-card">
+            <h3 data-i18n="pciio.io.title">Io.Read / Io.Write</h3>
+            <p  data-i18n="pciio.io.desc"></p>
+        </div>
+        <div class="proto-card">
+            <h3 data-i18n="pciio.map.title">Map / Unmap</h3>
+            <p  data-i18n="pciio.map.desc"></p>
+        </div>
+        <div class="proto-card">
+            <h3 data-i18n="pciio.alloc.title">AllocateBuffer / FreeBuffer</h3>
+            <p  data-i18n="pciio.alloc.desc"></p>
+        </div>
+        <div class="proto-card">
+            <h3 data-i18n="pciio.getloc.title">GetLocation</h3>
+            <p  data-i18n="pciio.getloc.desc"></p>
+        </div>
+        <div class="proto-card">
+            <h3 data-i18n="pciio.attr.title">Attributes / GetBarAttributes / SetBarAttributes</h3>
+            <p  data-i18n="pciio.attr.desc"></p>
+        </div>
+        <div class="proto-card">
+            <h3 data-i18n="pciio.rom.title">RomImage / RomSize</h3>
+            <p  data-i18n="pciio.rom.desc"></p>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : x86 vs ARM Architecture Comparison              -->
+<!-- ========================================================= -->
+<section id="arch-compare" class="section panel">
+    <h2 data-i18n="arch.title">x86_64 vs ARM64 Architecture Comparison</h2>
+    <p class="section-subtitle" data-i18n="arch.subtitle">Key differences in the PCI subsystem across architectures</p>
+
+    <div id="arch-table-container"></div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : Code Analysis                                   -->
+<!-- ========================================================= -->
+<section id="code" class="section panel">
+    <h2 data-i18n="code.title">Code Analysis</h2>
+    <p class="section-subtitle" data-i18n="code.subtitle">Key EDK2 PCI subsystem source code snippets</p>
+
+    <div class="code-blocks">
+        <!-- bus scan -->
+        <div class="code-block">
+            <h3 data-i18n="code.scan.title">PCI Bus Scan (PciBusDxe)</h3>
+            <p  data-i18n="code.scan.desc"></p>
+            <pre><code><span class="cmt">// MdeModulePkg/Bus/Pci/PciBusDxe/PciEnumerator.c (simplified)</span>
+<span class="kw">for</span> (Bus = StartBus; Bus &lt;= EndBus; Bus++) {
+  <span class="kw">for</span> (Device = <span class="num">0</span>; Device &lt;= PCI_MAX_DEVICE; Device++) {
+    <span class="kw">for</span> (Func = <span class="num">0</span>; Func &lt;= PCI_MAX_FUNC; Func++) {
+
+      Status = PciRootBridgeIo-&gt;<span class="fn">Pci.Read</span> (
+                 PciRootBridgeIo,
+                 <span class="typ">EfiPciWidthUint32</span>,
+                 <span class="fn">EFI_PCI_ADDRESS</span> (Bus, Device, Func, <span class="num">0</span>),
+                 <span class="num">1</span>,
+                 &amp;PciData
+               );
+
+      <span class="kw">if</span> (PciData.Hdr.VendorId == <span class="num">0xFFFF</span>) {
+        <span class="cmt">// No device present</span>
+        <span class="kw">if</span> (Func == <span class="num">0</span>) <span class="kw">break</span>;  <span class="cmt">// Skip remaining functions</span>
+        <span class="kw">continue</span>;
+      }
+
+      <span class="cmt">// Device found — create PCI_IO_DEVICE</span>
+      PciDevice = <span class="fn">CreatePciIoDevice</span> (Bridge, Bus, Device, Func);
+
+      <span class="cmt">// Check multi-function bit</span>
+      <span class="kw">if</span> (Func == <span class="num">0</span> &amp;&amp;
+          !IS_PCI_MULTI_FUNC (&amp;PciData)) {
+        <span class="kw">break</span>;  <span class="cmt">// Not multi-function, skip Func 1-7</span>
+      }
+    }
+  }
+}</code></pre>
+        </div>
+
+        <!-- BAR sizing -->
+        <div class="code-block">
+            <h3 data-i18n="code.bar.title">BAR Sizing</h3>
+            <p  data-i18n="code.bar.desc"></p>
+            <pre><code><span class="cmt">// MdeModulePkg/Bus/Pci/PciBusDxe/PciResourceSupport.c (simplified)</span>
+<span class="kw">for</span> (Offset = <span class="num">0x10</span>; Offset &lt;= <span class="num">0x24</span>; Offset += <span class="num">4</span>) {
+  <span class="cmt">// 1. Save original BAR value</span>
+  <span class="fn">PciIo-&gt;Pci.Read</span>  (PciIo, <span class="typ">EfiPciIoWidthUint32</span>, Offset, <span class="num">1</span>, &amp;OriginalValue);
+
+  <span class="cmt">// 2. Write all 1s</span>
+  AllOnes = <span class="num">0xFFFFFFFF</span>;
+  <span class="fn">PciIo-&gt;Pci.Write</span> (PciIo, <span class="typ">EfiPciIoWidthUint32</span>, Offset, <span class="num">1</span>, &amp;AllOnes);
+
+  <span class="cmt">// 3. Read back to get size mask</span>
+  <span class="fn">PciIo-&gt;Pci.Read</span>  (PciIo, <span class="typ">EfiPciIoWidthUint32</span>, Offset, <span class="num">1</span>, &amp;ReadBack);
+
+  <span class="cmt">// 4. Restore original value</span>
+  <span class="fn">PciIo-&gt;Pci.Write</span> (PciIo, <span class="typ">EfiPciIoWidthUint32</span>, Offset, <span class="num">1</span>, &amp;OriginalValue);
+
+  <span class="kw">if</span> (ReadBack == <span class="num">0</span>) <span class="kw">continue</span>;  <span class="cmt">// BAR not implemented</span>
+
+  <span class="kw">if</span> (ReadBack &amp; <span class="num">0x01</span>) {
+    <span class="cmt">// I/O BAR: mask low 2 bits</span>
+    Size = ~(ReadBack &amp; <span class="num">0xFFFFFFFC</span>) + <span class="num">1</span>;
+  } <span class="kw">else</span> {
+    <span class="cmt">// Memory BAR: mask low 4 bits</span>
+    Size = ~(ReadBack &amp; <span class="num">0xFFFFFFF0</span>) + <span class="num">1</span>;
+    Is64Bit = ((ReadBack &amp; <span class="num">0x06</span>) == <span class="num">0x04</span>);
+  }
+}</code></pre>
+        </div>
+
+        <!-- PCI IO usage -->
+        <div class="code-block">
+            <h3 data-i18n="code.pciio.title">PCI IO Protocol Usage Example</h3>
+            <p  data-i18n="code.pciio.desc"></p>
+            <pre><code><span class="cmt">// Example: Device driver reads Vendor/Device ID</span>
+<span class="typ">EFI_STATUS</span>           Status;
+<span class="typ">EFI_PCI_IO_PROTOCOL</span>  *PciIo;
+<span class="typ">UINT16</span>               VendorId;
+<span class="typ">UINT16</span>               DeviceId;
+
+<span class="cmt">// Open PCI IO Protocol on the device handle</span>
+Status = gBS-&gt;<span class="fn">OpenProtocol</span> (
+               DeviceHandle,
+               &amp;gEfiPciIoProtocolGuid,
+               (<span class="typ">VOID</span> **)&amp;PciIo,
+               DriverBinding-&gt;DriverBindingHandle,
+               DeviceHandle,
+               EFI_OPEN_PROTOCOL_BY_DRIVER
+             );
+
+<span class="cmt">// Read Vendor ID (offset 0x00)</span>
+Status = PciIo-&gt;<span class="fn">Pci.Read</span> (
+           PciIo,
+           <span class="typ">EfiPciIoWidthUint16</span>,
+           PCI_VENDOR_ID_OFFSET,   <span class="cmt">// 0x00</span>
+           <span class="num">1</span>,
+           &amp;VendorId
+         );
+
+<span class="cmt">// Read Device ID (offset 0x02)</span>
+Status = PciIo-&gt;<span class="fn">Pci.Read</span> (
+           PciIo,
+           <span class="typ">EfiPciIoWidthUint16</span>,
+           PCI_DEVICE_ID_OFFSET,   <span class="cmt">// 0x02</span>
+           <span class="num">1</span>,
+           &amp;DeviceId
+         );
+
+<span class="fn">DEBUG</span> ((<span class="typ">DEBUG_INFO</span>, <span class="str">"Found device %04X:%04X\n"</span>, VendorId, DeviceId));</code></pre>
+        </div>
+
+        <!-- Root Bridge IO -->
+        <div class="code-block">
+            <h3 data-i18n="code.rootbridge.title">Root Bridge IO Config Space Access</h3>
+            <p  data-i18n="code.rootbridge.desc"></p>
+            <pre><code><span class="cmt">// MdeModulePkg/Bus/Pci/PciHostBridgeDxe (ECAM path, simplified)</span>
+<span class="typ">EFI_STATUS</span>
+<span class="fn">RootBridgeIoPciRead</span> (
+  <span class="kw">IN</span>     <span class="typ">EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL</span>       *This,
+  <span class="kw">IN</span>     <span class="typ">EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL_WIDTH</span>  Width,
+  <span class="kw">IN</span>     <span class="typ">UINT64</span>                                 Address,
+  <span class="kw">IN</span>     <span class="typ">UINTN</span>                                  Count,
+  <span class="kw">OUT</span>    <span class="typ">VOID</span>                                   *Buffer
+  )
+{
+  <span class="typ">PCI_ROOT_BRIDGE_INSTANCE</span>  *RootBridge;
+  <span class="typ">UINT64</span>                    EcamBase;
+  <span class="typ">UINT64</span>                    PciAddress;
+
+  RootBridge = <span class="fn">ROOT_BRIDGE_FROM_THIS</span> (This);
+  EcamBase   = RootBridge-&gt;EcamBase;
+
+  <span class="cmt">// Calculate ECAM address:</span>
+  <span class="cmt">// Address encodes Bus[23:16] Dev[15:11] Fun[10:8] Reg[7:0]</span>
+  PciAddress = EcamBase
+             + ((<span class="fn">RB_PCI_BUS</span>(Address))  &lt;&lt; <span class="num">20</span>)
+             + ((<span class="fn">RB_PCI_DEV</span>(Address))  &lt;&lt; <span class="num">15</span>)
+             + ((<span class="fn">RB_PCI_FUNC</span>(Address)) &lt;&lt; <span class="num">12</span>)
+             + <span class="fn">RB_PCI_REG</span>(Address);
+
+  <span class="cmt">// Perform memory-mapped read</span>
+  <span class="kw">return</span> <span class="fn">MmioReadBuffer</span> (Width, PciAddress, Count, Buffer);
+}</code></pre>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- SECTION : References                                      -->
+<!-- ========================================================= -->
+<section id="references" class="section">
+    <h2 data-i18n="ref.title" style="text-align:center;">References</h2>
+    <p class="section-subtitle" data-i18n="ref.subtitle">Further reading and official specifications</p>
+
+    <div class="ref-grid">
+        <a href="https://pcisig.com/specifications" target="_blank" class="ref-card">
+            <h3 data-i18n="ref.pci.title">PCI/PCIe Specifications</h3>
+            <p>PCI-SIG official specifications — PCI Local Bus, PCIe Base Spec, ECN</p>
+        </a>
+        <a href="https://github.com/tianocore/edk2/tree/master/MdeModulePkg/Bus/Pci" target="_blank" class="ref-card">
+            <h3 data-i18n="ref.edk2.title">EDK2 Source Code</h3>
+            <p>MdeModulePkg/Bus/Pci — PciBusDxe, PciHostBridgeDxe, PciSioSerialDxe</p>
+        </a>
+        <a href="https://uefi.org/specifications" target="_blank" class="ref-card">
+            <h3 data-i18n="ref.uefi.title">UEFI/PI Specifications</h3>
+            <p>UEFI Spec Chapter 14 (PCI Bus Support), PI Spec Vol 5 (PCI Host Bridge)</p>
+        </a>
+        <a href="https://wiki.osdev.org/PCI" target="_blank" class="ref-card">
+            <h3 data-i18n="ref.other.title">Other Resources</h3>
+            <p>OSDev Wiki PCI page, ECAM specification, MCFG ACPI table documentation</p>
+        </a>
+    </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- Footer                                                    -->
+<!-- ========================================================= -->
+<footer>
+    <p>
+        <a href="https://github.com/tianocore/edk2" target="_blank">EDK2 Source</a> &bull;
+        <a href="https://uefi.org/specifications" target="_blank">UEFI Specifications</a> &bull;
+        <a href="https://pcisig.com" target="_blank">PCI-SIG</a> &bull;
+        <a href="https://github.com/Damien-Chen" target="_blank">GitHub</a>
+    </p>
+    <p style="margin-top: 12px;">&copy; 2025 Damien Chen. All rights reserved.</p>
+</footer>
+
+<!-- tooltip for register hover -->
+<div id="reg-tooltip" class="reg-tooltip">
+    <div class="tt-name"></div>
+    <div class="tt-offset"></div>
+    <div class="tt-desc"></div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

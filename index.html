@@ -102,6 +102,10 @@
             background: linear-gradient(135deg, #ef4444 0%, #22d3ee 100%);
         }
 
+        .tool-card:nth-child(6) .tool-icon {
+            background: linear-gradient(135deg, #f97316 0%, #38bdf8 100%);
+        }
+
         .tool-title {
             font-size: 1.5rem;
             font-weight: 600;
@@ -149,6 +153,11 @@
         .tool-card:nth-child(5) .tag {
             background: rgba(239, 68, 68, 0.12);
             color: #f87171;
+        }
+
+        .tool-card:nth-child(6) .tag {
+            background: rgba(249, 115, 22, 0.12);
+            color: #fb923c;
         }
 
         footer {
@@ -304,6 +313,28 @@
                     <span class="tag">Communicate()</span>
                     <span class="tag">SMRAM</span>
                     <span class="tag">Standalone MM</span>
+                </div>
+                <div class="nav-hint">
+                    <span>Open Tool</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </div>
+            </a>
+            <a href="pci-viz/index.html" class="tool-card">
+                <div class="tool-icon">&#x1F4E1;</div>
+                <h2 class="tool-title">PCI Subsystem Visualizer</h2>
+                <p class="tool-description">
+                    Interactive visualization of the UEFI EDK2 PCI subsystem: PCI/PCIe configuration
+                    space register map, config space access mechanisms (CF8/CFC vs ECAM), full PCI
+                    enumeration flow, PCI IO Protocol and Root Bridge IO Protocol architecture,
+                    with x86_64 vs ARM64 comparison.
+                </p>
+                <div class="tool-tags">
+                    <span class="tag">Config Space</span>
+                    <span class="tag">PCI Enumeration</span>
+                    <span class="tag">PCI IO Protocol</span>
+                    <span class="tag">x86 vs ARM</span>
                 </div>
                 <div class="nav-hint">
                     <span>Open Tool</span>
