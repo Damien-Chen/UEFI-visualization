@@ -161,12 +161,12 @@ function renderTriggerDiagram() {
 
     // boxes
     var boxes = [
-        { x: 40,  y: 100, w: 160, h: 100, label: 'DXE Driver',       sub: 'IoWrite8(0xB2, val)', color: C.dxe, fill: C.dxeFill },
-        { x: 260, y: 100, w: 140, h: 100, label: 'I/O Port 0xB2',    sub: t('trigger.port.desc'), color: C.comm, fill: C.commFill },
-        { x: 460, y: 100, w: 160, h: 100, label: 'Chipset',          sub: 'SMI# → all CPUs', color: C.smm, fill: C.smmFill },
-        { x: 680, y: 40,  w: 240, h: 70,  label: 'SMBASE + 0x8000',  sub: 'SMM Entry Point', color: C.cpu, fill: C.cpuFill },
-        { x: 680, y: 130, w: 240, h: 70,  label: 'SMM Core',         sub: 'SmmEntryPoint() → SmiManage()', color: C.smram, fill: C.smramFill },
-        { x: 680, y: 220, w: 240, h: 70,  label: 'RSM',              sub: t('trigger.smbase.desc') || 'Resume from SMM', color: C.mm, fill: C.mmFill },
+        { x: 40,  y: 100, w: 160, h: 100, label: 'DXE Driver',       sub: 'IoWrite8() / SMC', color: C.dxe, fill: C.dxeFill },
+        { x: 260, y: 100, w: 140, h: 100, label: 'I/O 0xB2 / EL3',   sub: t('trigger.port.desc'), color: C.comm, fill: C.commFill },
+        { x: 460, y: 100, w: 160, h: 100, label: 'CPU Response',     sub: 'SMI# / EL3 Trap', color: C.smm, fill: C.smmFill },
+        { x: 680, y: 40,  w: 240, h: 70,  label: 'MM Entry',         sub: 'SMBASE+0x8000 / S-EL0', color: C.cpu, fill: C.cpuFill },
+        { x: 680, y: 130, w: 240, h: 70,  label: 'MM Core',          sub: 'SmiManage() / MmiManage()', color: C.smram, fill: C.smramFill },
+        { x: 680, y: 220, w: 240, h: 70,  label: 'Return',           sub: 'RSM / SMC Return', color: C.mm, fill: C.mmFill },
     ];
 
     boxes.forEach(function(b) {
@@ -239,7 +239,7 @@ function renderBufferDiagram() {
     svg += svgText(dataX + dataW/2, startY + h + 50, t('buffer.data.title'), C.dxe, 11, 'middle', 600);
 
     // title
-    svg += svgText(W/2, 26, 'EFI_SMM_COMMUNICATE_HEADER', C.comm, 16, 'middle', 700);
+    svg += svgText(W/2, 26, 'EFI_MM_COMMUNICATE_HEADER', C.comm, 16, 'middle', 700);
 
     svg += '</svg>';
     el.innerHTML = svg;
@@ -259,9 +259,9 @@ function renderFlowStep(step) {
     // define regions
     var dxeBox  = { x: 30,  y: 50, w: 200, h: 340, label: 'DXE Environment',  color: C.dxe,   fill: C.dxeFill,   border: C.dxeDim };
     var commBox = { x: 280, y: 50, w: 160, h: 340, label: t('arch.label.comm_buf'), color: C.comm,  fill: C.commFill,  border: C.commDim };
-    var ioBox   = { x: 490, y: 50, w: 100, h: 120, label: 'I/O 0xB2',        color: C.comm,  fill: C.commFill,  border: C.commDim };
-    var cpuBox  = { x: 490, y: 200, w: 100, h: 100, label: 'CPU / SMI#',     color: C.cpu,   fill: C.cpuFill,   border: C.cpuDim };
-    var smmBox  = { x: 640, y: 50, w: 280, h: 340, label: 'SMM (SMRAM)',      color: C.smm,   fill: C.smmFill,   border: C.smmDim };
+    var ioBox   = { x: 490, y: 50, w: 100, h: 120, label: 'Trigger',         color: C.comm,  fill: C.commFill,  border: C.commDim };
+    var cpuBox  = { x: 490, y: 200, w: 100, h: 100, label: 'CPU Trap',       color: C.cpu,   fill: C.cpuFill,   border: C.cpuDim };
+    var smmBox  = { x: 640, y: 50, w: 280, h: 340, label: 'MM (Secure Mode)',color: C.smm,   fill: C.smmFill,   border: C.smmDim };
 
     var allBoxes = [dxeBox, commBox, ioBox, cpuBox, smmBox];
 
@@ -323,10 +323,10 @@ function renderFlowStep(step) {
 
     // inner blocks for SMM
     var smmInner = [
-        { y: 90,  h: 40, label: 'SmmEntryPoint()',  color: C.smm },
-        { y: 140, h: 40, label: 'SmiManage()',      color: C.smram },
-        { y: 190, h: 50, label: 'SMI Handler',      color: C.smram },
-        { y: 250, h: 40, label: 'RSM',              color: C.mm },
+        { y: 90,  h: 40, label: 'MmEntryPoint()',  color: C.smm },
+        { y: 140, h: 40, label: 'MmiManage()',     color: C.smram },
+        { y: 190, h: 50, label: 'MM Handler',      color: C.smram },
+        { y: 250, h: 40, label: 'Return (RSM/SMC)',color: C.mm },
     ];
     smmInner.forEach(function(b, i) {
         var active = false;
@@ -345,7 +345,7 @@ function renderFlowStep(step) {
     // animated arrows per step
     if (step === 0) {
         // highlight: DXE locates protocol
-        svg += svgText(dxeBox.x + dxeBox.w/2, dxeBox.y + dxeBox.h + 20, 'gBS->LocateProtocol(&gEfiSmmCommunicationProtocolGuid, ...)', C.dxe, 10, 'middle', 500);
+        svg += svgText(dxeBox.x + dxeBox.w/2, dxeBox.y + dxeBox.h + 20, 'gBS->LocateProtocol(..CommunicationProtocolGuid..)', C.dxe, 10, 'middle', 500);
     }
     if (step === 1) {
         // DXE -> comm buffer
@@ -361,13 +361,13 @@ function renderFlowStep(step) {
         // comm buffer addr -> I/O port 0xB2
         svg += svgArrow(commBox.x + commBox.w, 120, ioBox.x, 100, C.comm);
         svg += svgArrow(dxeBox.x + dxeBox.w, 222, ioBox.x, 120, C.comm, true);
-        svg += svgText(ioBox.x + ioBox.w/2, ioBox.y + ioBox.h + 16, 'IoWrite8(0xB2, SwSmiValue)', C.comm, 10, 'middle', 500);
+        svg += svgText(ioBox.x + ioBox.w/2, ioBox.y + ioBox.h + 16, 'IoWrite8 / SMC', C.comm, 10, 'middle', 500);
     }
     if (step === 4) {
         // I/O -> CPU -> SMM
         svg += svgArrow(ioBox.x + ioBox.w/2, ioBox.y + ioBox.h, cpuBox.x + cpuBox.w/2, cpuBox.y, C.cpu);
         svg += svgArrow(cpuBox.x + cpuBox.w, cpuBox.y + cpuBox.h/2, smmBox.x, 110, C.smm);
-        svg += svgText(cpuBox.x + cpuBox.w/2, cpuBox.y + cpuBox.h + 16, 'All cores → SMBASE + 0x8000', C.cpu, 10, 'middle', 500);
+        svg += svgText(cpuBox.x + cpuBox.w/2, cpuBox.y + cpuBox.h + 16, 'Core traps to Secure Mode', C.cpu, 10, 'middle', 500);
     }
     if (step === 5) {
         // SMM reads comm buffer
@@ -384,7 +384,7 @@ function renderFlowStep(step) {
         // RSM return -> DXE reads response
         svg += svgCurveArrow(smmBox.x, 270, smmBox.x - 80, 350, dxeBox.x + dxeBox.w + 40, 350, dxeBox.x + dxeBox.w, 277, C.done, true);
         svg += svgArrow(commBox.x, 250, dxeBox.x + dxeBox.w, 277, C.done);
-        svg += svgText(W/2, H - 20, 'RSM → CPU restores state → DXE reads response', C.done, 11, 'middle', 600);
+        svg += svgText(W/2, H - 20, 'Return to Normal World → DXE reads response', C.done, 11, 'middle', 600);
     }
 
     svg += '</svg>';

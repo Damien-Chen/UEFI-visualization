@@ -62,69 +62,80 @@ const translations = {
     'arch.label.save_state': 'CPU Save State',
 
     /* ---- trigger ---- */
-    'trigger.title':    'SMI 觸發機制',
-    'trigger.subtitle': '理解 System Management Interrupt 如何觸發 SMM',
+    'trigger.title':    'MM 觸發機制 (SMI & MMI)',
+    'trigger.subtitle': '理解平台如何觸發並進入 Management Mode (x86 SMM 或 ARM StMM)',
 
+    'trigger.x86.title': 'x86 架構：SMI 觸發',
     'trigger.swsmi.title': '軟體 SMI（SW SMI）',
     'trigger.swsmi.desc':  '透過向 I/O 埠 0xB2 寫入一個位元組值來觸發。這是 DXE 與 SMM 通訊最常用的方式。EFI_SMM_COMMUNICATION_PROTOCOL 的 Communicate() 函式內部就是透過寫入 0xB2 來觸發 SMI。',
 
     'trigger.hwsmi.title': '硬體 SMI',
-    'trigger.hwsmi.desc':  '由硬體事件觸發，例如 GPIO 變化、電源按鈕按下或 ACPI Timer 溢位。這些 SMI 由晶片組產生，CPU 自動回應。',
+    'trigger.hwsmi.desc':  '由硬體事件觸發，例如 GPIO 變化、電源按鈕按下或 ACPI Timer 溢位。這些 SMI 由晶片組產生，CPU 自動回應並強制進入 SMM。',
 
     'trigger.entry.title': 'SMM 進入流程',
-    'trigger.entry.desc':  '當 SMI 觸發時：① 所有 CPU 核心收到 SMI 信號 ② 每個核心儲存目前狀態到 SMRAM 中的 Save State Area ③ 所有核心跳轉到 SMBASE + 0x8000（SMI entry point）④ BSP（Bootstrap Processor）執行 SMM Foundation / SMM Core ⑤ AP（Application Processors）進入等待狀態 ⑥ 處理完成後執行 RSM 指令返回。',
+    'trigger.entry.desc':  '當 SMI 觸發時：① 所有 CPU 核心收到 SMI 信號 ② 暫存器狀態存入 SMRAM 的 Save State Area ③ 跳轉至 SMBASE + 0x8000 ④ BSP 執行 SMM Core，AP 進入等待 ⑤ 執行 RSM 返回。',
 
-    'trigger.port.label':    'I/O Port 0xB2',
-    'trigger.port.desc':     '寫入觸發 SW SMI',
-    'trigger.cpu.label':     'CPU 回應',
-    'trigger.cpu.desc':      '所有核心暫停，儲存狀態',
-    'trigger.smbase.label':  'SMBASE 入口',
-    'trigger.smbase.desc':   '跳轉到 SMBASE + 0x8000',
+    'trigger.arm.title': 'ARM 架構：MMI (Management Mode Interrupt) 與 StMM',
+    'trigger.smc.title': '同步 MMI (SMC 呼叫)',
+    'trigger.smc.desc':  'ARM 平台透過執行 SMC (Secure Monitor Call) 指令主動觸發。這對應於 x86 的 SW SMI，用於正常執行流中的 DXE-to-MM 通訊請求，請求會先進入 EL3，再由 Trusted Firmware 轉發給 S-EL0 的 StMM。',
+
+    'trigger.asyncmmi.title': '非同步 MMI (硬體中斷)',
+    'trigger.asyncmmi.desc':  '由硬體事件產生的安全中斷 (FIQ/IRQ)，由中斷控制器 (GIC) 發送給 CPU。GIC 將此中斷標記為 Secure Group，導致 CPU 陷入 EL3 並路由給 SPM (Secure Partition Manager) 處理。',
+
+    'trigger.stmm_entry.title': 'StMM 進入流程 (EL3 -> S-EL0)',
+    'trigger.stmm_entry.desc':  '① 觸發 SMC 或硬體安全中斷 ② CPU 陷入最高安全層級 EL3 (TF-A) ③ TF-A 的 SPM 將上下文切換到 Secure World ④ 降級進入 S-EL0 執行 Standalone MM Core ⑤ 處理完成後經 SMC 返回 EL3 再回到 Non-Secure EL1/EL2。',
+
+    'trigger.port.label':    'Trigger (0xB2 / SMC)',
+    'trigger.port.desc':     '寫入/呼叫 觸發 MM',
+    'trigger.cpu.label':     'CPU 回應 (SMI/EL3)',
+    'trigger.cpu.desc':      '核心暫停，陷入安全模式',
+    'trigger.smbase.label':  'MM Core 入口',
+    'trigger.smbase.desc':   '進入 SMBASE/S-EL0',
 
     /* ---- flow ---- */
     'flow.title':      '通訊流程',
-    'flow.subtitle':   '逐步了解 DXE 與 SMM 的完整通訊過程',
+    'flow.subtitle':   '逐步了解 DXE 與 MM 的完整通訊過程',
     'flow.step.label': '步驟',
     'flow.step.of':    '/',
 
     'flow.step1.title':  '步驟 1：定位通訊協定',
-    'flow.step1.desc':   'DXE 驅動程式透過 gBS->LocateProtocol() 找到 EFI_SMM_COMMUNICATION_PROTOCOL 的實例。此協定由 PiSmmIpl 驅動程式在啟動時安裝。',
-    'flow.step1.detail': 'PiSmmIpl（SMM Initial Program Loader）是 DXE 驅動程式，負責載入 SMM Core 到 SMRAM 並安裝通訊協定。',
+    'flow.step1.desc':   'DXE 驅動程式透過 gBS->LocateProtocol() 找到 EFI_SMM_COMMUNICATION_PROTOCOL 或 EFI_MM_COMMUNICATION_PROTOCOL 的實例。此協定由 MM IPL 驅動程式在啟動時安裝。',
+    'flow.step1.detail': 'MM IPL (Initial Program Loader) 是 DXE 驅動程式，負責載入 MM Core 到安全記憶體並安裝通訊協定。',
 
     'flow.step2.title':  '步驟 2：填寫通訊標頭',
-    'flow.step2.desc':   'DXE 驅動程式填寫 EFI_SMM_COMMUNICATE_HEADER 結構：HeaderGuid 設為目標 SMI Handler 的 GUID，MessageLength 設為 Data 的大小，Data[] 填入請求的負載資料。',
-    'flow.step2.detail': 'HeaderGuid 是 SMM Core 用來分派（dispatch）請求到正確 Handler 的關鍵。每個 SMI Handler 在註冊時都會指定自己的 GUID。',
+    'flow.step2.desc':   'DXE 驅動程式填寫 EFI_MM_COMMUNICATE_HEADER 結構：HeaderGuid 設為目標 MM Handler 的 GUID，MessageLength 設為 Data 的大小，Data[] 填入請求的負載資料。',
+    'flow.step2.detail': 'HeaderGuid 是 MM Core 用來分派（dispatch）請求到正確 Handler 的關鍵。每個 MM Handler 在註冊時都會指定自己的 GUID。',
 
     'flow.step3.title':  '步驟 3：呼叫 Communicate()',
-    'flow.step3.desc':   'DXE 驅動程式呼叫 EFI_SMM_COMMUNICATION_PROTOCOL.Communicate()，傳入緩衝區指標和大小。此函式會驗證參數並準備觸發 SMI。',
-    'flow.step3.detail': 'Communicate() 的實作位於 MdeModulePkg/Core/PiSmmIpl/PiSmmIpl.c 中的 SmmCommunicationCommunicate() 函式。',
+    'flow.step3.desc':   'DXE 驅動程式呼叫通訊協定的 Communicate() 函式，傳入緩衝區指標和大小。此函式會驗證參數並準備觸發進入安全模式。',
+    'flow.step3.detail': '實作通常位於特定架構的 MM IPL 驅動程式中（例如 x86 的 PiSmmIpl 或 ARM 的 StandaloneMmIpl）。',
 
-    'flow.step4.title':  '步驟 4：觸發 SW SMI',
-    'flow.step4.desc':   'Communicate() 內部將通訊緩衝區的位址寫入特定的固定位置（或透過 SMRAM 中的共享變數傳遞），然後向 I/O 埠 0xB2 寫入 SW SMI 值，觸發 System Management Interrupt。',
-    'flow.step4.detail': '實際寫入 I/O 埠的操作使用 IoWrite8(0xB2, value)。這會導致晶片組產生 SMI# 信號給所有 CPU。',
+    'flow.step4.title':  '步驟 4：觸發 MM (SMI / SMC)',
+    'flow.step4.desc':   'Communicate() 內部將通訊緩衝區的位址寫入特定的固定位置。然後觸發硬體特定的中斷/呼叫：x86 上寫入 I/O 埠 0xB2 (SW SMI)；ARM 上發出 SMC 呼叫。',
+    'flow.step4.detail': '這會導致處理器陷入最高特權模式 (x86 SMM 或 ARM EL3) 並開始切換到安全環境。',
 
-    'flow.step5.title':  '步驟 5：CPU 進入 SMM',
-    'flow.step5.desc':   '所有 CPU 核心收到 SMI 信號後：暫停目前執行、將暫存器狀態儲存到 Save State Area（位於 SMRAM）、跳轉到 SMBASE + 0x8000。BSP 核心負責執行 SMM Foundation。',
-    'flow.step5.detail': 'SMI 是不可遮蔽的中斷，比 NMI 優先級更高。所有核心必須在 SMM 中會合（rendezvous），確保同步處理。',
+    'flow.step5.title':  '步驟 5：CPU 進入 MM Core',
+    'flow.step5.desc':   'CPU 暫停目前執行，儲存暫存器狀態，並陷入安全模式。Secure Monitor (SMM Foundation 或 ARM TF-A/SPM) 接著將執行流路由至 MM Core 入口點。',
+    'flow.step5.detail': '在 x86 上，所有核心在 SMRAM 的 SMBASE 會合；在 ARM 上，EL3 將請求轉發至位於 S-EL0 的 Standalone MM Core。',
 
-    'flow.step6.title':  '步驟 6：SMM Core 分派',
-    'flow.step6.desc':   'SMM Foundation 進入 SmmEntryPoint()，接著 SMM Core 讀取通訊緩衝區中的 HeaderGuid，在已註冊的 SMI Handler 列表中搜尋匹配的 Handler，然後呼叫 SmiManage() 進行分派。',
-    'flow.step6.detail': 'SmiManage() 會遍歷所有為該 GUID 註冊的 Handler，依序呼叫它們，直到某個 Handler 回傳 EFI_SUCCESS 或所有 Handler 都被呼叫完畢。',
+    'flow.step6.title':  '步驟 6：MM Core 分派',
+    'flow.step6.desc':   'MM Core 讀取通訊緩衝區中的 HeaderGuid，在已註冊的 Handler 列表中搜尋匹配項，然後呼叫 MmiManage() 或 SmiManage() 進行分派。',
+    'flow.step6.detail': 'Manage 函式會遍歷所有為該 GUID 註冊的 Handler，依序呼叫它們，直到某個 Handler 回傳 EFI_SUCCESS。',
 
     'flow.step7.title':  '步驟 7：Handler 處理請求',
-    'flow.step7.desc':   'SMI Handler 從通訊緩衝區讀取請求資料（Data[] 區域），執行所需的安全操作（如讀寫 SPI Flash、存取安全暫存器等），然後將結果寫回同一個通訊緩衝區的 Data[] 中。',
-    'flow.step7.detail': 'Handler 必須驗證通訊緩衝區位址不在 SMRAM 範圍內（SmmIsBufferOutsideSmmValid()），防止 TOC/TOU 攻擊。',
+    'flow.step7.desc':   '目標 Handler 從通訊緩衝區讀取請求資料（Data[] 區域），執行所需的安全操作（如安全變數讀寫），然後將結果寫回同一個通訊緩衝區。',
+    'flow.step7.detail': 'Handler 必須驗證通訊緩衝區位址嚴格位於安全記憶體範圍之外，防止 TOC/TOU 攻擊或緩衝區重疊漏洞。',
 
-    'flow.step8.title':  '步驟 8：RSM 返回 DXE',
-    'flow.step8.desc':   '處理完成後，SMM Core 執行 RSM（Resume from SMM）指令。CPU 從 Save State Area 恢復所有暫存器狀態，返回到 DXE 驅動程式呼叫 Communicate() 的下一條指令。DXE 驅動程式從通訊緩衝區讀取回應資料。',
-    'flow.step8.detail': 'RSM 是從 SMM 返回的唯一方式。它會自動從 SMRAM 中的 Save State 恢復 CPU 上下文，無縫回到 Ring 0 DXE 環境。',
+    'flow.step8.title':  '步驟 8：返回 Normal World',
+    'flow.step8.desc':   '處理完成後，MM Core 將執行流返回 Normal World (x86 透過 RSM，ARM 透過 SMC 返回 EL1/EL2)。DXE 驅動程式接著從通訊緩衝區讀取回應資料。',
+    'flow.step8.detail': 'CPU 上下文會被無縫恢復，精確返回到 DXE 驅動程式呼叫 Communicate() 的下一條指令。',
 
     /* ---- buffer ---- */
     'buffer.title':      '通訊緩衝區內部結構',
-    'buffer.subtitle':   '理解 EFI_SMM_COMMUNICATE_HEADER 的結構和用途',
-    'buffer.desc':       '通訊緩衝區使用 EFI_SMM_COMMUNICATE_HEADER 結構，這是 DXE 和 SMM 之間交換資料的標準格式。HeaderGuid 用於路由請求到正確的 Handler，MessageLength 指定 Data 區域的大小，Data 包含實際的請求和回應負載。',
+    'buffer.subtitle':   '理解 EFI_MM_COMMUNICATE_HEADER 的結構和用途',
+    'buffer.desc':       '通訊緩衝區使用 EFI_MM_COMMUNICATE_HEADER (傳統為 EFI_SMM_COMMUNICATE_HEADER) 結構，這是 DXE 和 MM 之間交換資料的標準格式。HeaderGuid 用於路由請求到正確的 Handler，MessageLength 指定 Data 區域的大小，Data 包含實際的請求和回應負載。',
 
-    'buffer.struct':     'EFI_SMM_COMMUNICATE_HEADER { HeaderGuid, MessageLength, Data[] }',
+    'buffer.struct':     'EFI_MM_COMMUNICATE_HEADER { HeaderGuid, MessageLength, Data[] }',
 
     'buffer.guid.title': 'HeaderGuid（EFI_GUID，16 位元組）',
     'buffer.guid.desc':  '唯一識別目標 SMI Handler。SMM Core 用此 GUID 在已註冊的 Handler 列表中搜尋匹配的處理器。每個 SMM 驅動程式在呼叫 SmiHandlerRegister() 時指定自己的 GUID。',
@@ -139,20 +150,20 @@ const translations = {
     'buffer.validation.desc':  'SMM Core 在處理通訊緩衝區前會進行嚴格驗證：① 檢查緩衝區位址是否在 SMRAM 範圍之外 ② 確認 MessageLength 不會造成整數溢位 ③ 驗證整個緩衝區（Header + Data）都不與 SMRAM 重疊。這是為了防止攻擊者利用精心構造的緩衝區來讀寫 SMRAM 內容。',
 
     /* ---- handler ---- */
-    'handler.title':      'SMI Handler 註冊機制',
-    'handler.subtitle':   '理解 SMM 驅動程式如何註冊 Handler 來處理通訊請求',
+    'handler.title':      'MM 處理器註冊機制 (SMI & MMI)',
+    'handler.subtitle':   '理解 SMM/MM 驅動程式如何註冊 Handler 來處理通訊請求',
 
     'handler.guid.title': 'GUID-Based Handler（通訊協定用）',
-    'handler.guid.desc':  '使用 SmiHandlerRegister() 註冊，綁定特定的 GUID。當 DXE 透過 EFI_SMM_COMMUNICATION_PROTOCOL 發送帶有匹配 GUID 的請求時，SMM Core 會分派到此 Handler。這是最常用的 DXE-SMM 通訊方式。',
+    'handler.guid.desc':  '使用 SmiHandlerRegister() 或 MmiHandlerRegister() 註冊，綁定特定的 GUID。這是 DXE-MM 通訊的標準跨平台(x86/ARM)方式。當 DXE 發送帶有匹配 GUID 的請求時，MM Core 會分派到此 Handler。',
 
-    'handler.sw.title':   'SW SMI Number Handler',
-    'handler.sw.desc':    '使用 EFI_SMM_SW_DISPATCH2_PROTOCOL 註冊，綁定特定的 SW SMI 號碼（0x00-0xFF）。當對應的 SW SMI 號碼被觸發時呼叫。通常用於 ACPI/ASL 程式碼觸發的 SMI。',
+    'handler.sw.title':   '硬體/軟體特定 Handler',
+    'handler.sw.desc':    '在 x86 上通常使用 EFI_SMM_SW_DISPATCH2_PROTOCOL 註冊，綁定特定的 SW SMI 號碼；在 ARM 上可能綁定特定硬體中斷。通常用於 ACPI/ASL 程式碼或硬體事件觸發。',
 
-    'handler.root.title': 'Root SMI Handler',
-    'handler.root.desc':  '使用 SmiHandlerRegister() 但 GUID 設為 NULL 來註冊。每次 SMI 觸發時都會被呼叫，不論 SMI 來源。用於需要處理所有 SMI 事件的情況，如效能監控或除錯。',
+    'handler.root.title': 'Root MM Handler',
+    'handler.root.desc':  '使用 SmiHandlerRegister/MmiHandlerRegister 但 GUID 設為 NULL 來註冊。每次 SMI/MMI 觸發時都會被呼叫，不論來源。用於需要處理所有事件的情況，如效能監控或全域除錯。',
 
-    'handler.lifecycle.title': 'SMM 驅動程式生命週期',
-    'handler.lifecycle.desc':  'SMM 驅動程式在 DXE 階段由 SMM IPL 載入到 SMRAM 中。載入後，驅動程式的入口點被呼叫，此時它可以使用 SMM 服務表（gSmst）來註冊 Handler。一旦 SmmReadyToLock 信號觸發，SMRAM 被鎖定，不再能載入新的 SMM 驅動程式。Handler 在系統整個生命週期中持續存在，即使在 ExitBootServices 之後。',
+    'handler.lifecycle.title': 'MM 驅動程式生命週期與分派 (SmiManage / MmiManage)',
+    'handler.lifecycle.desc':  '驅動程式在啟動階段載入安全記憶體後，透過入口點使用 gSmst 或 gMmst 註冊 Handler。當 MM 事件觸發時，MM Core 透過 SmiManage() 或 MmiManage() 遍歷註冊清單，找到對應的 Handler 並分派執行。',
 
     /* ---- standalone ---- */
     'standalone.title':    'Standalone MM 與傳統 MM 比較',
@@ -180,19 +191,19 @@ const translations = {
 
     /* ---- code ---- */
     'code.title':          '關鍵程式碼解析',
-    'code.subtitle':       'EDK2 中 SMM 通訊的核心實作',
+    'code.subtitle':       'EDK2 中 SMM/MM 通訊的核心實作',
 
-    'code.communicate.title': 'SmmCommunicationCommunicate()',
-    'code.communicate.desc':  'DXE 端的通訊入口函式，由 PiSmmIpl 實作。驗證參數後觸發 SW SMI。',
+    'code.communicate.title': 'Communicate() / MmCommunicate()',
+    'code.communicate.desc':  'DXE 端的通訊入口函式，由 MM IPL 實作。驗證參數後觸發軟體陷阱（如 SW SMI 或 SMC）。',
 
-    'code.entrypoint.title':  'SmmEntryPoint()',
-    'code.entrypoint.desc':   'SMM 的進入點，CPU 從 SMI 進入後執行的第一個高階函式。',
+    'code.entrypoint.title':  'MmEntryPoint() / SmmEntryPoint()',
+    'code.entrypoint.desc':   'MM 的進入點，CPU 從陷阱進入安全模式後執行的第一個高階函式。',
 
-    'code.smimanage.title':   'SmiManage()',
-    'code.smimanage.desc':    'SMM Core 的核心分派函式，根據 GUID 找到並呼叫對應的 Handler。',
+    'code.smimanage.title':   'MmiManage() / SmiManage()',
+    'code.smimanage.desc':    'MM Core 的核心分派函式，根據 GUID 找到並呼叫對應的 Handler。',
 
-    'code.register.title':    'SmiHandlerRegister() 範例',
-    'code.register.desc':     'SMM 驅動程式如何註冊一個 GUID-based SMI Handler。',
+    'code.register.title':    'MmiHandlerRegister() 範例',
+    'code.register.desc':     'MM 驅動程式如何註冊一個 GUID-based Handler。',
 
     /* ---- references ---- */
     'ref.title':         '參考資源',
@@ -265,9 +276,10 @@ const translations = {
     'arch.label.save_state': 'CPU Save State',
 
     /* ---- trigger ---- */
-    'trigger.title':    'SMI Trigger Mechanism',
-    'trigger.subtitle': 'Understanding how System Management Interrupts trigger SMM',
+    'trigger.title':    'MM Trigger Mechanism (SMI & MMI)',
+    'trigger.subtitle': 'Understanding how platforms transition into Management Mode (x86 SMM or ARM StMM)',
 
+    'trigger.x86.title': 'x86 Architecture: SMI Trigger',
     'trigger.swsmi.title': 'Software SMI (SW SMI)',
     'trigger.swsmi.desc':  'Triggered by writing a byte value to I/O port 0xB2. This is the most common way for DXE to communicate with SMM. The Communicate() function of EFI_SMM_COMMUNICATION_PROTOCOL internally writes to 0xB2 to trigger the SMI.',
 
@@ -275,59 +287,69 @@ const translations = {
     'trigger.hwsmi.desc':  'Triggered by hardware events such as GPIO changes, power button presses, or ACPI timer overflow. These SMIs are generated by the chipset, and the CPU responds automatically.',
 
     'trigger.entry.title': 'SMM Entry Flow',
-    'trigger.entry.desc':  'When an SMI fires: ① All CPU cores receive the SMI signal ② Each core saves its current state to the Save State Area in SMRAM ③ All cores jump to SMBASE + 0x8000 (SMI entry point) ④ BSP (Bootstrap Processor) runs the SMM Foundation / SMM Core ⑤ APs (Application Processors) enter a wait state ⑥ Upon completion, the RSM instruction returns execution.',
+    'trigger.entry.desc':  'When an SMI fires: ① All CPU cores receive the SMI signal ② State saved to Save State Area in SMRAM ③ Jump to SMBASE + 0x8000 ④ BSP runs SMM Core, APs wait ⑤ RSM instruction returns execution.',
 
-    'trigger.port.label':    'I/O Port 0xB2',
-    'trigger.port.desc':     'Write triggers SW SMI',
-    'trigger.cpu.label':     'CPU Response',
-    'trigger.cpu.desc':      'All cores halt, save state',
-    'trigger.smbase.label':  'SMBASE Entry',
-    'trigger.smbase.desc':   'Jump to SMBASE + 0x8000',
+    'trigger.arm.title': 'ARM Architecture: MMI & Standalone MM',
+    'trigger.smc.title': 'Sync MMI (SMC Call)',
+    'trigger.smc.desc':  'Active trigger on ARM via SMC (Secure Monitor Call) instruction. This is the ARM equivalent of SW SMI, routing DXE-to-MM requests from Non-Secure EL1/EL2 into EL3, where Trusted Firmware forwards it to StMM in Secure-EL0.',
+
+    'trigger.asyncmmi.title': 'Async MMI (Hardware)',
+    'trigger.asyncmmi.desc':  'Hardware-generated secure interrupts (FIQ/IRQ) routed by the interrupt controller (GIC). The GIC tags them as Secure Group interrupts, trapping the CPU into EL3, where the SPM (Secure Partition Manager) handles them.',
+
+    'trigger.stmm_entry.title': 'StMM Entry Flow (EL3 -> S-EL0)',
+    'trigger.stmm_entry.desc':  '① SMC or Secure Interrupt traps CPU into EL3 (TF-A) ② SPM switches context to Secure World ③ Drops to S-EL0 to execute Standalone MM Core ④ After processing, SMC returns back to EL3, then back to Non-Secure EL1/EL2.',
+
+    'trigger.port.label':    'Trigger (0xB2 / SMC)',
+    'trigger.port.desc':     'Write/Call triggers MM',
+    'trigger.cpu.label':     'CPU Response (SMI/EL3)',
+    'trigger.cpu.desc':      'Cores halt, trap to secure',
+    'trigger.smbase.label':  'MM Core Entry',
+    'trigger.smbase.desc':   'Jump to SMBASE / S-EL0',
 
     /* ---- flow ---- */
     'flow.title':      'Communication Flow',
-    'flow.subtitle':   'Step-by-step walkthrough of DXE-SMM communication',
+    'flow.subtitle':   'Step-by-step walkthrough of DXE-MM communication',
     'flow.step.label': 'Step',
     'flow.step.of':    '/',
 
     'flow.step1.title':  'Step 1: Locate Protocol',
-    'flow.step1.desc':   'The DXE driver uses gBS->LocateProtocol() to find an instance of EFI_SMM_COMMUNICATION_PROTOCOL. This protocol is installed by the PiSmmIpl driver at boot time.',
-    'flow.step1.detail': 'PiSmmIpl (SMM Initial Program Loader) is a DXE driver responsible for loading the SMM Core into SMRAM and installing the communication protocol.',
+    'flow.step1.desc':   'The DXE driver uses gBS->LocateProtocol() to find an instance of EFI_SMM_COMMUNICATION_PROTOCOL or EFI_MM_COMMUNICATION_PROTOCOL. This protocol is installed by the MM IPL driver at boot time.',
+    'flow.step1.detail': 'MM IPL (Initial Program Loader) is a DXE driver responsible for loading the MM Core into secure memory and installing the communication protocol.',
 
     'flow.step2.title':  'Step 2: Fill Communication Header',
-    'flow.step2.desc':   'The DXE driver fills the EFI_SMM_COMMUNICATE_HEADER structure: sets HeaderGuid to the target SMI handler\'s GUID, MessageLength to the size of Data, and populates Data[] with the request payload.',
-    'flow.step2.detail': 'The HeaderGuid is the key used by the SMM Core to dispatch requests to the correct handler. Each SMI handler specifies its own GUID during registration.',
+    'flow.step2.desc':   'The DXE driver fills the EFI_MM_COMMUNICATE_HEADER structure: sets HeaderGuid to the target MM handler\'s GUID, MessageLength to the size of Data, and populates Data[] with the request payload.',
+    'flow.step2.detail': 'The HeaderGuid is the key used by the MM Core to dispatch requests to the correct handler. Each MM handler specifies its own GUID during registration.',
 
     'flow.step3.title':  'Step 3: Call Communicate()',
-    'flow.step3.desc':   'The DXE driver calls EFI_SMM_COMMUNICATION_PROTOCOL.Communicate(), passing the buffer pointer and size. This function validates parameters and prepares to trigger the SMI.',
-    'flow.step3.detail': 'The implementation lives in MdeModulePkg/Core/PiSmmIpl/PiSmmIpl.c as SmmCommunicationCommunicate().',
+    'flow.step3.desc':   'The DXE driver calls the Communicate() function of the protocol, passing the buffer pointer and size. This function validates parameters and prepares to trigger the transition to secure mode.',
+    'flow.step3.detail': 'The implementation typically lives in the architecture-specific MM IPL driver (e.g., PiSmmIpl for x86, or StandaloneMmIpl for ARM).',
 
-    'flow.step4.title':  'Step 4: Trigger SW SMI',
-    'flow.step4.desc':   'Inside Communicate(), the communication buffer address is written to a well-known location (or passed via a shared SMRAM variable), then a SW SMI value is written to I/O port 0xB2, triggering a System Management Interrupt.',
-    'flow.step4.detail': 'The actual I/O port write uses IoWrite8(0xB2, value). This causes the chipset to assert SMI# to all CPUs.',
+    'flow.step4.title':  'Step 4: Trigger MM (SMI / SMC)',
+    'flow.step4.desc':   'Inside Communicate(), the communication buffer address is written to a well-known location. Then, a hardware-specific trigger is fired: on x86, writing to I/O port 0xB2 (SW SMI); on ARM, issuing an SMC call.',
+    'flow.step4.detail': 'This causes the processor to trap into the highest privilege mode (x86 SMM or ARM EL3) and begin the transition into the secure environment.',
 
-    'flow.step5.title':  'Step 5: CPU Enters SMM',
-    'flow.step5.desc':   'All CPU cores receive the SMI signal: they pause current execution, save register state to the Save State Area (in SMRAM), and jump to SMBASE + 0x8000. The BSP core runs the SMM Foundation.',
-    'flow.step5.detail': 'SMI is a non-maskable interrupt with higher priority than NMI. All cores must rendezvous in SMM to ensure synchronized processing.',
+    'flow.step5.title':  'Step 5: CPU Enters MM Core',
+    'flow.step5.desc':   'The CPU pauses current execution, saves register state, and traps into secure mode. The secure monitor (SMM Foundation or ARM TF-A/SPM) then routes execution to the MM Core entry point.',
+    'flow.step5.detail': 'On x86, cores rendezvous in SMRAM at SMBASE. On ARM, EL3 forwards the request to S-EL0 where the Standalone MM Core resides.',
 
-    'flow.step6.title':  'Step 6: SMM Core Dispatch',
-    'flow.step6.desc':   'The SMM Foundation enters SmmEntryPoint(), then the SMM Core reads the HeaderGuid from the communication buffer, searches the registered SMI handler list for a match, and calls SmiManage() for dispatch.',
-    'flow.step6.detail': 'SmiManage() iterates through all handlers registered for that GUID, calling each in order until one returns EFI_SUCCESS or all have been called.',
+    'flow.step6.title':  'Step 6: MM Core Dispatch',
+    'flow.step6.desc':   'The MM Core reads the HeaderGuid from the communication buffer, searches the registered handler list for a match, and calls MmiManage() (or SmiManage) for dispatch.',
+    'flow.step6.detail': 'The manage function iterates through all handlers registered for that GUID, calling each in order until one returns EFI_SUCCESS.',
 
     'flow.step7.title':  'Step 7: Handler Processes Request',
-    'flow.step7.desc':   'The SMI handler reads request data from the communication buffer\'s Data[] region, performs the required secure operations (e.g., SPI Flash read/write, secure register access), and writes the result back to the same Data[] area.',
-    'flow.step7.detail': 'The handler must validate the communication buffer address is outside SMRAM (SmmIsBufferOutsideSmmValid()) to prevent TOC/TOU attacks.',
+    'flow.step7.desc':   'The target Handler reads request data from the communication buffer\'s Data[] region, performs the required secure operations (e.g., Secure Variable read/write), and writes the result back.',
+    'flow.step7.detail': 'The handler must validate that the communication buffer address is strictly outside secure memory to prevent TOC/TOU and buffer overlap attacks.',
 
-    'flow.step8.title':  'Step 8: RSM Returns to DXE',
-    'flow.step8.desc':   'After processing, the SMM Core executes the RSM (Resume from SMM) instruction. The CPU restores all register state from the Save State Area and returns to the instruction following the DXE driver\'s Communicate() call. The DXE driver reads the response from the communication buffer.',
-    'flow.step8.detail': 'RSM is the only way to exit SMM. It automatically restores the CPU context from the Save State in SMRAM, seamlessly returning to the Ring 0 DXE environment.',
+    'flow.step8.title':  'Step 8: Return to Normal World',
+    'flow.step8.desc':   'After processing, the MM Core returns execution to the normal world (via RSM on x86, or returning through SMC to EL1/EL2 on ARM). The DXE driver reads the response from the communication buffer.',
+    'flow.step8.detail': 'The CPU context is seamlessly restored, returning exactly to the instruction following the DXE driver\'s Communicate() call.',
 
     /* ---- buffer ---- */
     'buffer.title':      'Communication Buffer Internals',
-    'buffer.subtitle':   'Understanding the EFI_SMM_COMMUNICATE_HEADER structure and usage',
-    'buffer.desc':       'The communication buffer uses the EFI_SMM_COMMUNICATE_HEADER structure — the standard format for exchanging data between DXE and SMM. HeaderGuid routes the request to the correct handler, MessageLength specifies the Data region size, and Data contains the actual request/response payload.',
+    'buffer.subtitle':   'Understanding the EFI_MM_COMMUNICATE_HEADER structure and usage',
+    'buffer.desc':       'The communication buffer uses the EFI_MM_COMMUNICATE_HEADER (traditionally EFI_SMM_COMMUNICATE_HEADER) structure — the standard format for exchanging data between DXE and MM. HeaderGuid routes the request to the correct handler, MessageLength specifies the Data region size, and Data contains the actual request/response payload.',
 
-    'buffer.struct':     'EFI_SMM_COMMUNICATE_HEADER { HeaderGuid, MessageLength, Data[] }',
+    'buffer.struct':     'EFI_MM_COMMUNICATE_HEADER { HeaderGuid, MessageLength, Data[] }',
 
     'buffer.guid.title': 'HeaderGuid (EFI_GUID, 16 bytes)',
     'buffer.guid.desc':  'Uniquely identifies the target SMI handler. The SMM Core uses this GUID to search for a matching handler in its registered handler list. Each SMM driver specifies its own GUID when calling SmiHandlerRegister().',
@@ -342,20 +364,20 @@ const translations = {
     'buffer.validation.desc':  'The SMM Core performs strict validation before processing: ① Checks that the buffer address is outside SMRAM ② Verifies MessageLength does not cause integer overflow ③ Confirms the entire buffer (Header + Data) does not overlap with SMRAM. This prevents attackers from using crafted buffers to read/write SMRAM contents.',
 
     /* ---- handler ---- */
-    'handler.title':      'SMI Handler Registration',
-    'handler.subtitle':   'How SMM drivers register handlers to process communication requests',
+    'handler.title':      'MM Handler Registration (SMI & MMI)',
+    'handler.subtitle':   'How SMM/MM drivers register handlers to process communication requests',
 
     'handler.guid.title': 'GUID-Based Handler (for Communication Protocol)',
-    'handler.guid.desc':  'Registered using SmiHandlerRegister() with a specific GUID. When DXE sends a request with a matching GUID via EFI_SMM_COMMUNICATION_PROTOCOL, the SMM Core dispatches to this handler. This is the most common DXE-SMM communication pattern.',
+    'handler.guid.desc':  'Registered using SmiHandlerRegister() or MmiHandlerRegister() with a specific GUID. When DXE sends a request with a matching GUID, the MM Core dispatches to this handler. This is the standardized DXE-MM communication pattern across x86 and ARM.',
 
-    'handler.sw.title':   'SW SMI Number Handler',
-    'handler.sw.desc':    'Registered using EFI_SMM_SW_DISPATCH2_PROTOCOL with a specific SW SMI number (0x00-0xFF). Called when the corresponding SW SMI number is triggered. Typically used for SMIs triggered by ACPI/ASL code.',
+    'handler.sw.title':   'Hardware/Software Specific Handler',
+    'handler.sw.desc':    'Registered using specific dispatch protocols (like EFI_SMM_SW_DISPATCH2_PROTOCOL on x86). Bound to specific SW SMI numbers or hardware events. Often used by ACPI/ASL or specific hardware triggers.',
 
-    'handler.root.title': 'Root SMI Handler',
-    'handler.root.desc':  'Registered using SmiHandlerRegister() with NULL GUID. Called on every SMI regardless of source. Used for scenarios requiring handling of all SMI events, such as performance monitoring or debugging.',
+    'handler.root.title': 'Root MM Handler',
+    'handler.root.desc':  'Registered using SmiHandlerRegister/MmiHandlerRegister with a NULL GUID. Called on every SMI/MMI regardless of source. Used for scenarios requiring handling of all events, such as performance monitoring or debugging.',
 
-    'handler.lifecycle.title': 'SMM Driver Lifecycle',
-    'handler.lifecycle.desc':  'SMM drivers are loaded into SMRAM by the SMM IPL during the DXE phase. Once loaded, the driver\'s entry point is called, where it uses the SMM System Table (gSmst) to register handlers. After SmmReadyToLock is signaled, SMRAM is locked and no new SMM drivers can be loaded. Handlers persist for the entire system lifetime, even after ExitBootServices.',
+    'handler.lifecycle.title': 'MM Driver Lifecycle & Dispatch (SmiManage / MmiManage)',
+    'handler.lifecycle.desc':  'Drivers are loaded into secure memory during boot. Their entry points register handlers via gSmst->SmiHandlerRegister or gMmst->MmiHandlerRegister. When an MM event fires, the Core loops through registered handlers via SmiManage() / MmiManage() until one handles the event.',
 
     /* ---- standalone ---- */
     'standalone.title':    'Standalone MM vs Traditional MM',
@@ -383,19 +405,19 @@ const translations = {
 
     /* ---- code ---- */
     'code.title':          'Key Code Analysis',
-    'code.subtitle':       'Core SMM communication implementation in EDK2',
+    'code.subtitle':       'Core MM communication implementation in EDK2',
 
-    'code.communicate.title': 'SmmCommunicationCommunicate()',
-    'code.communicate.desc':  'The DXE-side communication entry function, implemented by PiSmmIpl. Validates parameters then triggers SW SMI.',
+    'code.communicate.title': 'Communicate() / MmCommunicate()',
+    'code.communicate.desc':  'The DXE-side communication entry function, implemented by the MM IPL. Validates parameters then triggers the secure trap (e.g. SW SMI or SMC).',
 
-    'code.entrypoint.title':  'SmmEntryPoint()',
-    'code.entrypoint.desc':   'The SMM entry point — the first high-level function executed after CPU enters SMM via SMI.',
+    'code.entrypoint.title':  'MmEntryPoint() / SmmEntryPoint()',
+    'code.entrypoint.desc':   'The MM entry point — the first high-level function executed after CPU enters secure mode.',
 
-    'code.smimanage.title':   'SmiManage()',
-    'code.smimanage.desc':    'The SMM Core\'s central dispatch function. Finds and calls the matching handler by GUID.',
+    'code.smimanage.title':   'MmiManage() / SmiManage()',
+    'code.smimanage.desc':    'The MM Core\'s central dispatch function. Finds and calls the matching handler by GUID.',
 
-    'code.register.title':    'SmiHandlerRegister() Example',
-    'code.register.desc':     'How an SMM driver registers a GUID-based SMI handler.',
+    'code.register.title':    'MmiHandlerRegister() Example',
+    'code.register.desc':     'How an MM driver registers a GUID-based handler.',
 
     /* ---- references ---- */
     'ref.title':         'References',

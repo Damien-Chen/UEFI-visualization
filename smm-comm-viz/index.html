@@ -104,11 +104,12 @@
 <!-- SECTION : SMI Trigger Mechanism                           -->
 <!-- ========================================================= -->
 <section id="trigger" class="section panel">
-    <h2 data-i18n="trigger.title">SMI Trigger Mechanism</h2>
-    <p class="section-subtitle" data-i18n="trigger.subtitle">Understanding how System Management Interrupts trigger SMM</p>
+    <h2 data-i18n="trigger.title">MM Trigger Mechanism (SMI & MMI)</h2>
+    <p class="section-subtitle" data-i18n="trigger.subtitle">Understanding how platforms transition into Management Mode</p>
 
-    <div id="trigger-diagram" class="diagram-container"></div>
+    <div id="trigger-diagram" class="diagram-container" style="height: auto; min-height: 320px;"></div>
 
+    <h3 style="margin-bottom: 1rem; color: var(--text);" data-i18n="trigger.x86.title">x86 Architecture: SMI Trigger</h3>
     <div class="arch-cards">
         <div class="arch-card" style="background:var(--smm-bg); border-color:rgba(239,68,68,0.18);">
             <h3 style="color:var(--smm-color);" data-i18n="trigger.swsmi.title">Software SMI</h3>
@@ -121,6 +122,22 @@
         <div class="arch-card" style="background:var(--mm-bg); border-color:rgba(34,211,238,0.18);">
             <h3 style="color:var(--mm-color);" data-i18n="trigger.entry.title">SMM Entry Flow</h3>
             <p data-i18n="trigger.entry.desc"></p>
+        </div>
+    </div>
+
+    <h3 style="margin: 2rem 0 1rem; color: var(--text);" data-i18n="trigger.arm.title">ARM Architecture: MMI & Standalone MM</h3>
+    <div class="arch-cards">
+        <div class="arch-card" style="background:var(--smm-bg); border-color:rgba(239,68,68,0.18);">
+            <h3 style="color:var(--smm-color);" data-i18n="trigger.smc.title">Sync MMI (SMC)</h3>
+            <p data-i18n="trigger.smc.desc"></p>
+        </div>
+        <div class="arch-card" style="background:var(--cpu-bg); border-color:rgba(167,139,250,0.18);">
+            <h3 style="color:var(--cpu-color);" data-i18n="trigger.asyncmmi.title">Async MMI (Hardware)</h3>
+            <p data-i18n="trigger.asyncmmi.desc"></p>
+        </div>
+        <div class="arch-card" style="background:var(--mm-bg); border-color:rgba(34,211,238,0.18);">
+            <h3 style="color:var(--mm-color);" data-i18n="trigger.stmm_entry.title">StMM Entry Flow</h3>
+            <p data-i18n="trigger.stmm_entry.desc"></p>
         </div>
     </div>
 </section>
@@ -153,12 +170,12 @@
 <!-- ========================================================= -->
 <section id="buffer" class="section panel">
     <h2 data-i18n="buffer.title">Communication Buffer Internals</h2>
-    <p class="section-subtitle" data-i18n="buffer.subtitle">Understanding the EFI_SMM_COMMUNICATE_HEADER structure</p>
+    <p class="section-subtitle" data-i18n="buffer.subtitle">Understanding the EFI_MM_COMMUNICATE_HEADER structure</p>
 
     <p class="buffer-intro" data-i18n="buffer.desc"></p>
 
     <div class="struct-box">
-        <code data-i18n="buffer.struct">EFI_SMM_COMMUNICATE_HEADER { HeaderGuid, MessageLength, Data[] }</code>
+        <code data-i18n="buffer.struct">EFI_MM_COMMUNICATE_HEADER { HeaderGuid, MessageLength, Data[] }</code>
     </div>
 
     <div id="buffer-diagram" class="diagram-container"></div>
@@ -187,8 +204,8 @@
 <!-- SECTION : Handler Registration                            -->
 <!-- ========================================================= -->
 <section id="handler" class="section panel">
-    <h2 data-i18n="handler.title">SMI Handler Registration</h2>
-    <p class="section-subtitle" data-i18n="handler.subtitle">How SMM drivers register handlers</p>
+    <h2 data-i18n="handler.title">MM Handler Registration (SMI & MMI)</h2>
+    <p class="section-subtitle" data-i18n="handler.subtitle">How SMM/MM drivers register handlers for dispatch</p>
 
     <div class="arch-cards">
         <div class="arch-card" style="background:var(--smm-bg); border-color:rgba(239,68,68,0.18);">
@@ -196,18 +213,18 @@
             <p data-i18n="handler.guid.desc"></p>
         </div>
         <div class="arch-card" style="background:var(--comm-bg); border-color:rgba(251,191,36,0.18);">
-            <h3 style="color:var(--comm-color);" data-i18n="handler.sw.title">SW SMI Number Handler</h3>
+            <h3 style="color:var(--comm-color);" data-i18n="handler.sw.title">Hardware/Software specific Handler</h3>
             <p data-i18n="handler.sw.desc"></p>
         </div>
         <div class="arch-card" style="background:var(--cpu-bg); border-color:rgba(167,139,250,0.18);">
-            <h3 style="color:var(--cpu-color);" data-i18n="handler.root.title">Root SMI Handler</h3>
+            <h3 style="color:var(--cpu-color);" data-i18n="handler.root.title">Root MM Handler</h3>
             <p data-i18n="handler.root.desc"></p>
         </div>
     </div>
 
     <div class="buffer-cards" style="margin-top:28px;">
         <div class="buffer-card" style="grid-column: 1 / -1;">
-            <h3 data-i18n="handler.lifecycle.title">SMM Driver Lifecycle</h3>
+            <h3 data-i18n="handler.lifecycle.title">MM Driver Lifecycle & Dispatch (SmiManage / MmiManage)</h3>
             <p  data-i18n="handler.lifecycle.desc"></p>
         </div>
     </div>
@@ -242,7 +259,7 @@
     <div class="code-blocks">
         <!-- block 1 -->
         <div class="code-block">
-            <h3 data-i18n="code.communicate.title">SmmCommunicationCommunicate()</h3>
+            <h3 data-i18n="code.communicate.title">Communicate() / MmCommunicate()</h3>
             <p  data-i18n="code.communicate.desc"></p>
             <pre><code>// MdeModulePkg/Core/PiSmmIpl/PiSmmIpl.c
 EFI_STATUS
@@ -256,23 +273,24 @@ SmmCommunicationCommunicate (
   //
   // Validate CommBuffer and CommSize
   //
-  CommunicateHeader = (EFI_SMM_COMMUNICATE_HEADER *)CommBuffer;
+  CommunicateHeader = (EFI_MM_COMMUNICATE_HEADER *)CommBuffer;
   ...
 
   //
-  // Save the comm buffer pointer in a well-known SMRAM location
-  // so SMM Core can find it after SMI
+  // Save the comm buffer pointer in a well-known secure location
+  // so MM Core can find it after Trap
   //
   gSmmCorePrivate->CommunicationBuffer = CommBuffer;
   gSmmCorePrivate->BufferSize          = TempCommSize;
 
   //
-  // Trigger Software SMI via I/O port 0xB2
+  // Trigger Hardware Trap (e.g. Software SMI via 0xB2 or SMC)
   //
-  IoWrite8 (0xB2, gSmmCorePrivate->SwSmiValue);
+  IoWrite8 (0xB2, gSmmCorePrivate->SwSmiValue); // x86 specific
+  // For ARM: ArmCallSmc (SMC_ARG_SMM_COMMUNICATE...)
 
   //
-  // After RSM, execution resumes here
+  // After RSM / SMC return, execution resumes here
   // Return status is already in CommBuffer
   //
   return gSmmCorePrivate->ReturnStatus;
@@ -281,9 +299,9 @@ SmmCommunicationCommunicate (
 
         <!-- block 2 -->
         <div class="code-block">
-            <h3 data-i18n="code.entrypoint.title">SmmEntryPoint()</h3>
+            <h3 data-i18n="code.entrypoint.title">MmEntryPoint() / SmmEntryPoint()</h3>
             <p  data-i18n="code.entrypoint.desc"></p>
-            <pre><code>// MdeModulePkg/Core/PiSmmCore/PiSmmCore.c
+            <pre><code>// MdeModulePkg/Core/PiSmmCore/PiSmmCore.c (or StandaloneMmCore)
 VOID
 EFIAPI
 SmmEntryPoint (
@@ -291,19 +309,14 @@ SmmEntryPoint (
   )
 {
   //
-  // Save the entry context for later use
-  //
-  gSmmCorePrivate->SmmEntryContext = SmmEntryContext;
-
-  //
-  // Check if this SMI was triggered by Communicate()
+  // Check if this trap was triggered by Communicate()
   //
   if (gSmmCorePrivate->CommunicationBuffer != NULL) {
-    CommunicateHeader = (EFI_SMM_COMMUNICATE_HEADER *)
+    CommunicateHeader = (EFI_MM_COMMUNICATE_HEADER *)
                           gSmmCorePrivate->CommunicationBuffer;
 
     //
-    // Validate buffer is outside SMRAM
+    // Validate buffer is outside Secure Memory
     //
     BufferSize = GetCommBufferSize (CommunicateHeader);
     if (!SmmIsBufferOutsideSmmValid (
@@ -315,7 +328,7 @@ SmmEntryPoint (
     //
     // Dispatch to registered handler by GUID
     //
-    gSmmCorePrivate->ReturnStatus = SmiManage (
+    gSmmCorePrivate->ReturnStatus = SmiManage ( // Or MmiManage
       &CommunicateHeader->HeaderGuid,
       NULL,
       CommunicateHeader->Data,
@@ -323,20 +336,20 @@ SmmEntryPoint (
       );
   }
   //
-  // Also dispatch root SMI handlers (NULL GUID)
+  // Also dispatch root MM handlers (NULL GUID)
   //
-  SmiManage (NULL, NULL, NULL, NULL);
+  SmiManage (NULL, NULL, NULL, NULL); // Or MmiManage
 }</code></pre>
         </div>
 
         <!-- block 3 -->
         <div class="code-block">
-            <h3 data-i18n="code.smimanage.title">SmiManage()</h3>
+            <h3 data-i18n="code.smimanage.title">MmiManage() / SmiManage()</h3>
             <p  data-i18n="code.smimanage.desc"></p>
-            <pre><code>// MdeModulePkg/Core/PiSmmCore/Smi.c
+            <pre><code>// MdeModulePkg/Core/PiSmmCore/Smi.c (or StandaloneMmPkg Mmi.c)
 EFI_STATUS
 EFIAPI
-SmiManage (
+SmiManage ( // Or MmiManage
   IN CONST EFI_GUID  *HandlerType,
   IN CONST VOID      *Context      OPTIONAL,
   IN OUT VOID        *CommBuffer   OPTIONAL,
@@ -346,7 +359,7 @@ SmiManage (
   //
   // Find the handler list for this GUID
   //
-  List = SmmCoreFindSmiEntry (HandlerType);
+  List = MmCoreFindSmiEntry (HandlerType);
   if (List == NULL) {
     return EFI_NOT_FOUND;
   }
@@ -378,17 +391,17 @@ SmiManage (
 
         <!-- block 4 -->
         <div class="code-block">
-            <h3 data-i18n="code.register.title">SmiHandlerRegister() Example</h3>
+            <h3 data-i18n="code.register.title">MmiHandlerRegister() Example</h3>
             <p  data-i18n="code.register.desc"></p>
-            <pre><code>// Example SMM Driver registering a communication handler
-#include &lt;Protocol/SmmCommunication.h&gt;
+            <pre><code>// Example MM Driver registering a communication handler
+#include &lt;Protocol/MmCommunication.h&gt;
 
 EFI_GUID gMyHandlerGuid = { 0x12345678, 0xABCD, ... };
 EFI_HANDLE  mDispatchHandle = NULL;
 
 EFI_STATUS
 EFIAPI
-MySmiHandler (
+MyMmHandler (
   IN EFI_HANDLE  DispatchHandle,
   IN CONST VOID  *Context        OPTIONAL,
   IN OUT VOID    *CommBuffer     OPTIONAL,
@@ -402,10 +415,9 @@ MySmiHandler (
   }
 
   //
-  // Validate buffer is outside SMRAM
+  // Validate buffer is outside Secure Memory
   //
-  if (!SmmIsBufferOutsideSmmValid (
-         (UINTN)CommBuffer, *CommBufferSize)) {
+  if (!MmIsBufferOutsideMmValid ((UINTN)CommBuffer, *CommBufferSize)) {
     return EFI_ACCESS_DENIED;
   }
 
@@ -434,10 +446,10 @@ MyDriverEntryPoint (
   )
 {
   //
-  // Register GUID-based SMI handler
+  // Register GUID-based MM handler
   //
-  gSmst->SmiHandlerRegister (
-           MySmiHandler,
+  gMmst->MmiHandlerRegister ( // Or gSmst->SmiHandlerRegister
+           MyMmHandler,
            &gMyHandlerGuid,
            &mDispatchHandle
            );
