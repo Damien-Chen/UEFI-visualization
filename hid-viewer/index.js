@@ -717,4 +717,317 @@ layoutButtons.forEach(btn => {
 
 document.addEventListener('DOMContentLoaded', () => {
     renderKeyboard(currentLayout);
+    initViewTabs();
 });
+
+// ============================================
+// USB Keyboard DXE Protocol Stack Data
+// ============================================
+
+const PROTOCOL_STACK = [
+    {
+        id: 'consumer',
+        label: 'Consumer',
+        sublabel: 'UEFI Shell / Boot Manager / Setup UI',
+        color: '#22d3ee',
+        colorDim: 'rgba(34,211,238,0.18)',
+        description: 'Applications and firmware UI that consume keyboard input via ReadKeyStroke() or ReadKeyStrokeEx(). The UEFI Shell, Boot Manager (BDS), and HII-based Setup UI all locate the Simple Text Input (Ex) protocol on the console input device handle to read user keystrokes.',
+        details: {
+            'Protocol Consumed': 'EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL\nEFI_SIMPLE_TEXT_INPUT_PROTOCOL',
+            'Typical Callers': 'gST->ConIn->ReadKeyStroke()\ngST->ConIn->Reset()',
+            'EDK2 Examples': 'ShellPkg, MdeModulePkg/Universal/BdsDxe',
+        },
+        binding: null,
+    },
+    {
+        id: 'simple_text_input',
+        label: 'EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL',
+        sublabel: 'Produced by UsbKbDxe',
+        color: '#818cf8',
+        colorDim: 'rgba(129,140,248,0.18)',
+        description: 'The extended keyboard protocol defined by UEFI spec. Provides ReadKeyStrokeEx() which returns EFI_KEY_DATA containing both the Unicode/ScanCode (EFI_INPUT_KEY) and the shift/toggle state (EFI_KEY_STATE). Also supports RegisterKeyNotify() for hotkey callbacks. UsbKbDxe installs this protocol on the USB keyboard device handle.',
+        details: {
+            'GUID': 'gEfiSimpleTextInputExProtocolGuid\n{DD9E7534-7762-4698-8C14-F58517A625AA}',
+            'Header': 'MdePkg/Include/Protocol/SimpleTextInEx.h',
+            'Key Functions': 'ReadKeyStrokeEx()\nSetState()\nRegisterKeyNotify()\nUnregisterKeyNotify()',
+            'Produced By': 'UsbKbDxe (MdeModulePkg/Bus/Usb/UsbKbDxe)',
+        },
+        binding: null,
+    },
+    {
+        id: 'usbkbdxe',
+        label: 'UsbKbDxe',
+        sublabel: 'USB Keyboard Driver — UEFI Driver Model',
+        color: '#6366f1',
+        colorDim: 'rgba(99,102,241,0.22)',
+        description: 'The USB Keyboard DXE driver follows the UEFI Driver Model (EFI_DRIVER_BINDING_PROTOCOL). In Supported(), it checks if the handle carries EFI_USB_IO_PROTOCOL with InterfaceClass=0x03 (HID), InterfaceSubClass=0x01 (Boot), and InterfaceProtocol=0x01 (Keyboard). In Start(), it configures the HID idle rate, sets the boot protocol, sets up an async interrupt transfer to poll the 8-byte HID boot report, translates HID usage codes to EFI key codes using a keycode map, and installs EFI_SIMPLE_TEXT_INPUT_PROTOCOL and EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL. In Stop(), it tears down the interrupt transfer and uninstalls the protocols.',
+        details: {
+            'EDK2 Module': 'MdeModulePkg/Bus/Usb/UsbKbDxe',
+            'INF': 'UsbKbDxe.inf',
+            'Consumes': 'EFI_USB_IO_PROTOCOL',
+            'Produces': 'EFI_SIMPLE_TEXT_INPUT_PROTOCOL\nEFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL',
+            'HID Match': 'InterfaceClass=0x03, SubClass=0x01, Protocol=0x01',
+            'Report Format': '8-byte Boot Protocol Report\n[Modifier][Rsvd][Key1][Key2]…[Key6]',
+        },
+        binding: ['Supported()', 'Start()', 'Stop()'],
+    },
+    {
+        id: 'usb_io',
+        label: 'EFI_USB_IO_PROTOCOL',
+        sublabel: 'Produced by UsbBusDxe on each USB device/interface',
+        color: '#a78bfa',
+        colorDim: 'rgba(167,139,250,0.18)',
+        description: 'Created by the USB Bus Driver for each USB interface discovered during enumeration. Provides UsbAsyncInterruptTransfer() which UsbKbDxe uses to set up periodic polling (typically 8 ms) of the keyboard\'s interrupt IN endpoint. Also provides UsbControlTransfer() for SET_IDLE and SET_PROTOCOL requests, and UsbGetInterfaceDescriptor() used during Supported() matching.',
+        details: {
+            'GUID': 'gEfiUsbIoProtocolGuid\n{2B2F68D6-0CD2-44CF-8E8B-BBA20B1B5B75}',
+            'Header': 'MdePkg/Include/Protocol/UsbIo.h',
+            'Key Functions': 'UsbControlTransfer()\nUsbAsyncInterruptTransfer()\nUsbGetInterfaceDescriptor()\nUsbGetEndpointDescriptor()',
+            'Produced By': 'UsbBusDxe (MdeModulePkg/Bus/Usb/UsbBusDxe)',
+        },
+        binding: null,
+    },
+    {
+        id: 'usbbusdxe',
+        label: 'UsbBusDxe',
+        sublabel: 'USB Bus Driver — Device Enumeration',
+        color: '#c084fc',
+        colorDim: 'rgba(192,132,252,0.18)',
+        description: 'The USB Bus Driver follows the UEFI Driver Model. In Supported(), it checks for EFI_USB2_HC_PROTOCOL (or EFI_USB_HC_PROTOCOL for UHCI). In Start(), it creates a root hub, begins enumeration of all ports (hub cascade supported), reads device/config/interface descriptors, and creates a child handle with EFI_USB_IO_PROTOCOL for each interface. It also handles connect/disconnect hotplug events via periodic hub status polling.',
+        details: {
+            'EDK2 Module': 'MdeModulePkg/Bus/Usb/UsbBusDxe',
+            'INF': 'UsbBusDxe.inf',
+            'Consumes': 'EFI_USB2_HC_PROTOCOL\n(or EFI_USB_HC_PROTOCOL)',
+            'Produces': 'EFI_USB_IO_PROTOCOL (per interface)',
+            'Enumeration': 'GET_DESCRIPTOR (Device, Config, Interface)\nSET_ADDRESS\nSET_CONFIGURATION',
+        },
+        binding: ['Supported()', 'Start()', 'Stop()'],
+    },
+    {
+        id: 'usb2_hc',
+        label: 'EFI_USB2_HC_PROTOCOL',
+        sublabel: 'Produced by Host Controller Driver',
+        color: '#f472b6',
+        colorDim: 'rgba(244,114,182,0.18)',
+        description: 'The Host Controller protocol abstracts USB transaction scheduling. Provides BulkTransfer(), ControlTransfer(), InterruptTransfer(), IsochronousTransfer(), and AsyncInterruptTransfer() for all USB transfer types. Also provides GetRootHubPortStatus() / SetRootHubPortFeature() for root hub port management. Implemented by the xHCI, EHCI, or UHCI driver depending on the hardware.',
+        details: {
+            'GUID': 'gEfiUsb2HcProtocolGuid\n{3E745226-9818-45B6-A2AC-D7CD0E8BA2BC}',
+            'Header': 'MdePkg/Include/Protocol/Usb2HostController.h',
+            'Key Functions': 'ControlTransfer()\nBulkTransfer()\nAsyncInterruptTransfer()\nGetRootHubPortStatus()\nSetRootHubPortFeature()',
+            'Produced By': 'XhciDxe / EhciDxe / UhciDxe',
+        },
+        binding: null,
+    },
+    {
+        id: 'hc_driver',
+        label: 'USB Host Controller Driver',
+        sublabel: 'XhciDxe / EhciDxe / UhciDxe',
+        color: '#fb923c',
+        colorDim: 'rgba(251,146,60,0.18)',
+        description: 'Hardware-specific DXE driver that manages the USB host controller registers. XhciDxe handles USB 3.x (xHCI spec), EhciDxe handles USB 2.0 (EHCI spec), and UhciDxe handles USB 1.1 (UHCI spec). Each follows the UEFI Driver Model: Supported() checks for PCI I/O with matching class code (0x0C/0x03), Start() initializes the controller (MMIO BAR mapping, command ring, event ring, scratchpad), and installs EFI_USB2_HC_PROTOCOL.',
+        details: {
+            'EDK2 Modules': 'MdeModulePkg/Bus/Pci/XhciDxe\nMdeModulePkg/Bus/Pci/EhciDxe\nMdeModulePkg/Bus/Pci/UhciDxe',
+            'Consumes': 'EFI_PCI_IO_PROTOCOL',
+            'Produces': 'EFI_USB2_HC_PROTOCOL',
+            'PCI Class': '0x0C (Serial Bus) / 0x03 (USB)',
+            'PCI SubClass/PI': 'xHCI=0x30, EHCI=0x20, UHCI=0x00',
+        },
+        binding: ['Supported()', 'Start()', 'Stop()'],
+    },
+    {
+        id: 'hardware',
+        label: 'USB Host Controller Hardware',
+        sublabel: 'xHCI / EHCI / UHCI — PCI/PCIe Device',
+        color: '#34d399',
+        colorDim: 'rgba(52,211,153,0.18)',
+        description: 'The physical USB host controller silicon on the platform, typically a PCI/PCIe function. xHCI (USB 3.x) uses MMIO registers, command/transfer/event rings in system memory. EHCI (USB 2.0) uses async/periodic schedules. UHCI (USB 1.1) uses a frame list with TDs. The controller generates interrupts on transfer completion and port status change.',
+        details: {
+            'Specifications': 'xHCI 1.2 (Intel)\nEHCI 1.0\nUHCI 1.1',
+            'Access': 'PCI BAR MMIO',
+            'Interrupt': 'MSI / MSI-X / Legacy INTx',
+            'Topology': 'Root Hub → External Ports → USB Devices',
+        },
+        binding: null,
+    },
+];
+
+// ============================================
+// View Tab Switching
+// ============================================
+
+function initViewTabs() {
+    const viewTabs = document.querySelectorAll('.view-tab');
+    const keyboardView = document.getElementById('keyboardView');
+    const stackView = document.getElementById('stackView');
+
+    viewTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const view = tab.dataset.view;
+
+            viewTabs.forEach(t => t.classList.toggle('active', t === tab));
+
+            if (view === 'keyboard') {
+                keyboardView.style.display = '';
+                stackView.style.display = 'none';
+            } else {
+                keyboardView.style.display = 'none';
+                stackView.style.display = '';
+                renderProtocolStack();
+            }
+        });
+    });
+}
+
+// ============================================
+// Protocol Stack SVG Rendering
+// ============================================
+
+let activeStackLayer = null;
+
+function renderProtocolStack() {
+    const container = document.getElementById('stackDiagram');
+    if (!container) return;
+
+    const W = 880;
+    const layerH = 62;
+    const layerGap = 6;
+    const arrowGap = 18;
+    const padX = 40;
+    const padTop = 20;
+    const layerW = W - 2 * padX;
+    const totalLayers = PROTOCOL_STACK.length;
+    const totalH = padTop + totalLayers * layerH + (totalLayers - 1) * (layerGap + arrowGap) + 30;
+
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${totalH}" style="font-family:'Inter',sans-serif;">`;
+
+    // Defs: arrow marker + glow filter
+    svg += `<defs>`;
+    svg += `<marker id="stackArrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">`;
+    svg += `<polygon points="0 0, 10 3.5, 0 7" fill="#6366f1"/>`;
+    svg += `</marker>`;
+    svg += `<filter id="layerGlow" x="-10%" y="-10%" width="120%" height="120%">`;
+    svg += `<feGaussianBlur stdDeviation="3" result="blur"/>`;
+    svg += `<feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>`;
+    svg += `</filter>`;
+    svg += `</defs>`;
+
+    PROTOCOL_STACK.forEach((layer, i) => {
+        const y = padTop + i * (layerH + layerGap + arrowGap);
+
+        // Group wrapper — all child elements are clickable as one unit
+        svg += `<g class="stack-layer-group" data-layer-id="${layer.id}" style="cursor:pointer">`;
+
+        // Layer rectangle (the hover/active visual target)
+        svg += `<rect class="stack-layer-rect" `;
+        svg += `x="${padX}" y="${y}" width="${layerW}" height="${layerH}" `;
+        svg += `rx="12" fill="${layer.colorDim}" stroke="${layer.color}" stroke-width="1.5"/>`;
+
+        // Left accent bar
+        svg += `<rect x="${padX}" y="${y}" width="5" height="${layerH}" rx="2.5" fill="${layer.color}" pointer-events="none"/>`;
+
+        // Label text
+        svg += `<text x="${padX + 20}" y="${y + 26}" fill="${layer.color}" font-size="14" font-weight="700" pointer-events="none">${escSvg(layer.label)}</text>`;
+
+        // Sublabel
+        svg += `<text x="${padX + 20}" y="${y + 46}" fill="rgba(255,255,255,0.5)" font-size="11" font-weight="400" pointer-events="none">${escSvg(layer.sublabel)}</text>`;
+
+        // Driver binding badges on the right side
+        if (layer.binding) {
+            const badgeStartX = padX + layerW - 20;
+            layer.binding.slice().reverse().forEach((step, bi) => {
+                const tw = step.length * 7.2 + 16;
+                const bx = badgeStartX - tw - bi * (tw + 6);
+                const by = y + layerH / 2 - 10;
+                svg += `<rect x="${bx}" y="${by}" width="${tw}" height="20" rx="4" fill="rgba(99,102,241,0.15)" stroke="rgba(99,102,241,0.35)" stroke-width="1" pointer-events="none"/>`;
+                svg += `<text x="${bx + tw / 2}" y="${by + 14}" text-anchor="middle" fill="#818cf8" font-size="10" font-weight="500" font-family="'JetBrains Mono',monospace" pointer-events="none">${escSvg(step)}</text>`;
+            });
+        }
+
+        svg += `</g>`;
+
+        // Arrow to next layer (outside group)
+        if (i < totalLayers - 1) {
+            const arrowY1 = y + layerH + 3;
+            const arrowY2 = y + layerH + layerGap + arrowGap - 3;
+            const cx = W / 2;
+            svg += `<line x1="${cx}" y1="${arrowY1}" x2="${cx}" y2="${arrowY2}" stroke="#6366f1" stroke-width="2" marker-end="url(#stackArrow)" stroke-dasharray="4,3"/>`;
+        }
+    });
+
+    svg += `</svg>`;
+    container.innerHTML = svg;
+
+    // Attach click handlers to group elements
+    container.querySelectorAll('.stack-layer-group').forEach(group => {
+        group.addEventListener('click', () => {
+            const layerId = group.getAttribute('data-layer-id');
+            selectStackLayer(layerId, container);
+        });
+    });
+
+    activeStackLayer = null;
+}
+
+function escSvg(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function selectStackLayer(layerId, svgContainer) {
+    const layer = PROTOCOL_STACK.find(l => l.id === layerId);
+    if (!layer) return;
+
+    // Update active rect styling
+    svgContainer.querySelectorAll('.stack-layer-group').forEach(g => {
+        const rect = g.querySelector('.stack-layer-rect');
+        if (rect) {
+            rect.classList.toggle('active', g.getAttribute('data-layer-id') === layerId);
+        }
+    });
+
+    activeStackLayer = layerId;
+
+    // Update detail panel
+    const panel = document.getElementById('stackDetailPanel');
+    const nameEl = document.getElementById('stackDetailName');
+    const bodyEl = document.getElementById('stackDetailBody');
+
+    panel.classList.add('active');
+    nameEl.textContent = layer.label;
+
+    let html = '';
+
+    // Description
+    html += `<div class="stack-detail-desc">${escHtml(layer.description)}</div>`;
+
+    // Details grid
+    if (layer.details) {
+        html += `<div class="stack-detail-grid">`;
+        for (const [key, val] of Object.entries(layer.details)) {
+            const formattedVal = escHtml(val).replace(/\n/g, '<br>');
+            html += `<div class="stack-detail-item">`;
+            html += `<span class="sdl">${escHtml(key)}</span>`;
+            html += `<span class="sdv">${formattedVal}</span>`;
+            html += `</div>`;
+        }
+        html += `</div>`;
+    }
+
+    // Driver binding flow
+    if (layer.binding) {
+        html += `<div class="stack-detail-binding">`;
+        layer.binding.forEach((step, i) => {
+            if (i > 0) {
+                html += `<span class="binding-arrow">\u2192</span>`;
+            }
+            html += `<span class="binding-step">${escHtml(step)}</span>`;
+        });
+        html += `</div>`;
+    }
+
+    bodyEl.innerHTML = html;
+}
+
+function escHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
