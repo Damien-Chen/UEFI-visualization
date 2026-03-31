@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UEFI Driver Binding 機制視覺化</title>
+    <meta name="description" content="Interactive step-by-step visualization of UEFI EDK2 Driver Binding Protocol: ConnectController, Supported(), Start(), Stop(), IHANDLE internals.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
+</head>
+<body>
+    <div class="bg-orb orb-a"></div>
+    <div class="bg-orb orb-b"></div>
+
+    <nav class="top-nav">
+        <div class="brand">
+            <a href="../index.html" class="back-link" data-i18n="nav.back">← Back to Tools</a>
+            <span data-i18n="page.title">UEFI Driver Binding Visualizer</span>
+        </div>
+        <ul class="nav-links">
+            <li><a class="nav-link active" href="#overview"    data-i18n="nav.overview">Overview</a></li>
+            <li><a class="nav-link"        href="#structs"     data-i18n="nav.structs">Data Structures</a></li>
+            <li><a class="nav-link"        href="#connect"     data-i18n="nav.connect">ConnectController</a></li>
+            <li><a class="nav-link"        href="#disconnect"  data-i18n="nav.disconnect">DisconnectController</a></li>
+            <li><a class="nav-link"        href="#scenario"    data-i18n="nav.scenario">Real Scenario</a></li>
+            <li><a class="nav-link"        href="#code"        data-i18n="nav.code">Code</a></li>
+            <li><a class="nav-link"        href="#references"  data-i18n="nav.references">References</a></li>
+        </ul>
+        <div class="lang-switcher">
+            <button class="lang-btn" data-lang="zh-TW" title="繁體中文">中文</button>
+            <button class="lang-btn" data-lang="en"    title="English">EN</button>
+        </div>
+    </nav>
+
+    <main class="page">
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!--  Section 1: Overview / Hero                                -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <header id="overview" class="section hero">
+            <p class="eyebrow" data-i18n="nav.overview">Overview</p>
+            <h1 data-i18n="overview.title">UEFI Driver Binding Protocol 概述</h1>
+            <p class="hero-desc" data-i18n="overview.subtitle">理解 EDK2 驅動程式如何被動態綁定到設備</p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-icon">🔌</div>
+                    <h3 data-i18n="overview.what.title">什麼是 Driver Binding Protocol？</h3>
+                    <p data-i18n="overview.what.desc"></p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">⚙️</div>
+                    <h3 data-i18n="overview.why.title">為什麼需要此機制？</h3>
+                    <p data-i18n="overview.why.desc"></p>
+                </div>
+            </div>
+
+            <div style="margin-top: 32px;">
+                <h2 style="font-family: var(--head); font-size:1.1rem; font-weight:600; color:var(--text); text-align:center; margin-bottom:20px;" data-i18n="overview.three.title">三個核心函式</h2>
+                <div class="fn-grid">
+                    <div class="fn-card supported">
+                        <h3 data-i18n="overview.supported.title">Supported()</h3>
+                        <p data-i18n="overview.supported.desc"></p>
+                    </div>
+                    <div class="fn-card start">
+                        <h3 data-i18n="overview.start.title">Start()</h3>
+                        <p data-i18n="overview.start.desc"></p>
+                    </div>
+                    <div class="fn-card stop">
+                        <h3 data-i18n="overview.stop.title">Stop()</h3>
+                        <p data-i18n="overview.stop.desc"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="connect-box" style="margin-top:28px; max-width:800px; margin-left:auto; margin-right:auto;">
+                <h3 data-i18n="overview.connect.title">ConnectController() 的角色</h3>
+                <p data-i18n="overview.connect.desc"></p>
+            </div>
+        </header>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!--  Section 2: Internal Data Structures                       -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <section id="structs" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="structs.title">內部核心資料結構</h2>
+                <p data-i18n="structs.subtitle"></p>
+            </div>
+
+            <div class="struct-grid">
+                <!-- IHANDLE -->
+                <div class="struct-card struct-ihandle">
+                    <div class="struct-card-header">
+                        <span class="struct-name">IHANDLE</span>
+                        <span class="struct-sig">'hand'</span>
+                    </div>
+                    <div class="struct-desc" data-i18n="structs.ihandle.desc"></div>
+                    <div class="struct-fields">
+                        <div class="struct-field">
+                            <span class="field-name">Signature</span>
+                            <span class="field-desc" data-i18n="structs.ihandle.sig"></span>
+                        </div>
+                        <div class="struct-field">
+                            <span class="field-name">AllHandles</span>
+                            <span class="field-desc" data-i18n="structs.ihandle.all"></span>
+                        </div>
+                        <div class="struct-field">
+                            <span class="field-name">Protocols</span>
+                            <span class="field-desc" data-i18n="structs.ihandle.protos"></span>
+                        </div>
+                        <div class="struct-field">
+                            <span class="field-name">Key</span>
+                            <span class="field-desc" data-i18n="structs.ihandle.key"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROTOCOL_INTERFACE -->
+                <div class="struct-card struct-pi">
+                    <div class="struct-card-header">
+                        <span class="struct-name">PROTOCOL_INTERFACE</span>
+                        <span class="struct-sig">'pi'</span>
+                    </div>
+                    <div class="struct-desc" data-i18n="structs.proto_iface.desc"></div>
+                    <div class="struct-fields">
+                        <div class="struct-field">
+                            <span class="field-name">Signature</span>
+                            <span class="field-desc" data-i18n="structs.proto_iface.sig"></span>
+                        </div>
+                        <div class="struct-field">
+                            <span class="field-name">Link</span>
+                            <span class="field-desc" data-i18n="structs.proto_iface.link"></span>
+                        </div>
+                        <div class="struct-field">
+                            <span class="field-name">Handle</span>
+                            <span class="field-desc" data-i18n="structs.proto_iface.handle"></span>
+                        </div>
+                        <div class="struct-field">
+                            <span class="field-name">Protocol</span>
+                            <span class="field-desc" data-i18n="structs.proto_iface.pe"></span>
+                        </div>
+                        <div class="struct-field">
+                            <span class="field-name">Interface</span>
+                            <span class="field-desc" data-i18n="structs.proto_iface.iface"></span>
+                        </div>
+                        <div class="struct-field">
+                            <span class="field-name">OpenList</span>
+                            <span class="field-desc" data-i18n="structs.proto_iface.open"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROTOCOL_ENTRY -->
+                <div class="struct-card struct-pe">
+                    <div class="struct-card-header">
+                        <span class="struct-name">PROTOCOL_ENTRY</span>
+                        <span class="struct-sig">'pe'</span>
+                    </div>
+                    <div class="struct-desc" data-i18n="structs.proto_entry.desc"></div>
+                    <div class="struct-fields">
+                        <div class="struct-field">
+                            <span class="field-name">Signature</span>
+                            <span class="field-desc" data-i18n="structs.proto_entry.sig"></span>
+                        </div>
+                        <div class="struct-field">
+                            <span class="field-name">AllEntries</span>
+                            <span class="field-desc" data-i18n="structs.proto_entry.all"></span>
+                        </div>
+                        <div class="struct-field">
+                            <span class="field-name">ProtocolID</span>
+                            <span class="field-desc" data-i18n="structs.proto_entry.guid"></span>
+                        </div>
+                        <div class="struct-field">
+                            <span class="field-name">Protocols</span>
+                            <span class="field-desc" data-i18n="structs.proto_entry.protos"></span>
+                        </div>
+                        <div class="struct-field">
+                            <span class="field-name">Notify</span>
+                            <span class="field-desc" data-i18n="structs.proto_entry.notify"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Relationship diagram -->
+            <div class="diagram-wrap" style="margin-top:40px;">
+                <div class="diagram-title" data-i18n="structs.diagram.title">三層結構關係圖</div>
+                <div class="diagram-desc" data-i18n="structs.diagram.desc"></div>
+                <div id="structs-diagram-container"></div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!--  Section 3: ConnectController step-by-step                 -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <section id="connect" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="connect.title">ConnectController 逐步流程</h2>
+                <p data-i18n="connect.subtitle"></p>
+            </div>
+
+            <div class="step-controls">
+                <button id="conn-prev" class="step-btn" disabled data-i18n="btn.prev">← 上一步</button>
+                <span id="conn-indicator" class="step-indicator">1 / 7</span>
+                <button id="conn-next" class="step-btn" data-i18n="btn.next">下一步 →</button>
+                <button id="conn-reset" class="step-btn reset-btn" data-i18n="btn.reset">重置</button>
+            </div>
+
+            <div id="conn-description" class="step-description">
+                <!-- filled by JS -->
+            </div>
+
+            <div class="svg-container">
+                <svg id="conn-svg" viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg">
+                    <!-- filled by JS -->
+                </svg>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!--  Section 4: DisconnectController step-by-step              -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <section id="disconnect" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="disconnect.title">DisconnectController / Stop() 逐步流程</h2>
+                <p data-i18n="disconnect.subtitle"></p>
+            </div>
+
+            <div class="step-controls">
+                <button id="dis-prev" class="step-btn" disabled data-i18n="btn.prev">← 上一步</button>
+                <span id="dis-indicator" class="step-indicator">1 / 6</span>
+                <button id="dis-next" class="step-btn" data-i18n="btn.next">下一步 →</button>
+                <button id="dis-reset" class="step-btn reset-btn" data-i18n="btn.reset">重置</button>
+            </div>
+
+            <div id="dis-description" class="step-description disconnect-step">
+                <!-- filled by JS -->
+            </div>
+
+            <div class="svg-container">
+                <svg id="dis-svg" viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg">
+                    <!-- filled by JS -->
+                </svg>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!--  Section 5: Real-world scenario                            -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <section id="scenario" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="scenario.title">實際案例：PCI 設備完整綁定鏈</h2>
+                <p data-i18n="scenario.subtitle"></p>
+            </div>
+
+            <p class="scenario-desc" data-i18n="scenario.desc"></p>
+
+            <div class="scenario-chain">
+
+                <div class="scenario-layer">
+                    <div class="scenario-dot"></div>
+                    <div class="scenario-content">
+                        <div class="scenario-layer-label" data-i18n="scenario.layer0">Layer 0</div>
+                        <h4>PCI Host Bridge Driver</h4>
+                        <p data-i18n="scenario.l0.desc"></p>
+                        <div class="scenario-protocols">
+                            <span class="proto-badge">EFI_DEVICE_PATH_PROTOCOL</span>
+                            <span class="proto-badge new">EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="scenario-layer">
+                    <div class="scenario-dot"></div>
+                    <div class="scenario-content">
+                        <div class="scenario-layer-label" data-i18n="scenario.layer1">Layer 1</div>
+                        <h4>PCI Bus Driver</h4>
+                        <p data-i18n="scenario.l1.desc"></p>
+                        <div class="scenario-protocols">
+                            <span class="proto-badge">EFI_DEVICE_PATH_PROTOCOL</span>
+                            <span class="proto-badge new">EFI_PCI_IO_PROTOCOL</span>
+                            <span class="proto-badge child">→ child handles per PCI device</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="scenario-layer">
+                    <div class="scenario-dot"></div>
+                    <div class="scenario-content">
+                        <div class="scenario-layer-label" data-i18n="scenario.layer2">Layer 2</div>
+                        <h4>NVMe Controller Driver</h4>
+                        <p data-i18n="scenario.l2.desc"></p>
+                        <div class="scenario-protocols">
+                            <span class="proto-badge">EFI_PCI_IO_PROTOCOL</span>
+                            <span class="proto-badge new">EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL</span>
+                            <span class="proto-badge new">EFI_BLOCK_IO_PROTOCOL</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="scenario-layer">
+                    <div class="scenario-dot"></div>
+                    <div class="scenario-content">
+                        <div class="scenario-layer-label" data-i18n="scenario.layer3">Layer 3</div>
+                        <h4>Partition Driver</h4>
+                        <p data-i18n="scenario.l3.desc"></p>
+                        <div class="scenario-protocols">
+                            <span class="proto-badge">EFI_BLOCK_IO_PROTOCOL (parent)</span>
+                            <span class="proto-badge new">EFI_BLOCK_IO_PROTOCOL (partition)</span>
+                            <span class="proto-badge child">→ child handles per GPT partition</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Scenario SVG -->
+            <div class="diagram-wrap" style="margin-top:40px;">
+                <div class="diagram-title">Handle Database — NVMe Binding Chain</div>
+                <div id="scenario-diagram-container"></div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!--  Section 6: Code walkthrough                               -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <section id="code" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="code.title">關鍵程式碼解析</h2>
+                <p data-i18n="code.subtitle"></p>
+            </div>
+
+            <div class="code-tabs">
+                <button class="code-tab active" data-tab="connect"  data-i18n="code.connect.title">CoreConnectController()</button>
+                <button class="code-tab"        data-tab="install"  data-i18n="code.install.title">CoreInstallProtocolInterface()</button>
+                <button class="code-tab"        data-tab="binding"  data-i18n="code.binding.title">Driver Binding Example</button>
+            </div>
+
+            <!-- ConnectController pane -->
+            <div class="code-pane active" id="pane-connect">
+                <div class="code-file-label" data-i18n="code.connect.file">MdeModulePkg/Core/Dxe/Hand/DriverSupport.c</div>
+                <div class="code-block"><pre id="code-connect-pre"></pre></div>
+            </div>
+
+            <!-- InstallProtocol pane -->
+            <div class="code-pane" id="pane-install">
+                <div class="code-file-label" data-i18n="code.install.file">MdeModulePkg/Core/Dxe/Hand/Handle.c</div>
+                <div class="code-block"><pre id="code-install-pre"></pre></div>
+            </div>
+
+            <!-- Driver Binding pane -->
+            <div class="code-pane" id="pane-binding">
+                <div class="code-file-label" data-i18n="code.binding.file">Example Driver</div>
+                <div class="code-block"><pre id="code-binding-pre"></pre></div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!--  Section 7: References                                     -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <section id="references" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="references.title">參考資源</h2>
+                <p data-i18n="references.desc"></p>
+            </div>
+
+            <ul class="refs-list">
+                <li>
+                    <a href="https://uefi.org/specifications" target="_blank" rel="noopener noreferrer" data-i18n="ref.uefi.title">UEFI Specification 2.10 — Section 11</a>
+                    <p data-i18n="ref.uefi.desc"></p>
+                </li>
+                <li>
+                    <a href="https://uefi.org/specifications" target="_blank" rel="noopener noreferrer" data-i18n="ref.pi.title">UEFI PI Specification — Volume 2</a>
+                    <p data-i18n="ref.pi.desc"></p>
+                </li>
+                <li>
+                    <a href="https://github.com/tianocore/edk2/blob/master/MdeModulePkg/Core/Dxe/Hand/Handle.c" target="_blank" rel="noopener noreferrer" data-i18n="ref.edk2.hand">EDK2: Hand/Handle.c</a>
+                    <p data-i18n="ref.edk2.hand.desc"></p>
+                </li>
+                <li>
+                    <a href="https://github.com/tianocore/edk2/blob/master/MdeModulePkg/Core/Dxe/Hand/DriverSupport.c" target="_blank" rel="noopener noreferrer" data-i18n="ref.edk2.drv">EDK2: Hand/DriverSupport.c</a>
+                    <p data-i18n="ref.edk2.drv.desc"></p>
+                </li>
+                <li>
+                    <a href="https://github.com/tianocore/edk2/blob/master/MdeModulePkg/Core/Dxe/DxeMain.h" target="_blank" rel="noopener noreferrer" data-i18n="ref.edk2.main">EDK2: DxeMain.h</a>
+                    <p data-i18n="ref.edk2.main.desc"></p>
+                </li>
+            </ul>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <p data-i18n="footer.text">UEFI Driver Binding 機制視覺化 | 教育用途</p>
+    </footer>
+
+    <script src="script.js" defer></script>
+</body>
+</html>
