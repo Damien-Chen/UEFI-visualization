@@ -957,6 +957,16 @@ g:has(.reserved-entry) .entry-type {
     border-top: 1px solid var(--border-color);
 }
 
+/* Focus-visible */
+button:focus-visible,
+a:focus-visible,
+.nav-link:focus-visible,
+.lang-btn:focus-visible,
+.step-btn:focus-visible {
+    outline: 2px solid #4fc3f7;
+    outline-offset: 2px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .navbar {

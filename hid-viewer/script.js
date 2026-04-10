@@ -692,14 +692,78 @@ function handleKeyLeave() {
 // ============================================
 
 function switchLayout(layoutName) {
+    if (!LAYOUTS[layoutName]) return;
     currentLayout = layoutName;
 
     layoutButtons.forEach(btn => {
         btn.classList.toggle('active', btn.dataset.layout === layoutName);
+        btn.setAttribute('aria-pressed', btn.dataset.layout === layoutName);
     });
 
     renderKeyboard(layoutName);
 }
+
+// ============================================
+// Physical Keyboard Input → HID Mapping
+// ============================================
+
+const JS_KEY_TO_HID = {
+    'KeyA':0x04,'KeyB':0x05,'KeyC':0x06,'KeyD':0x07,'KeyE':0x08,'KeyF':0x09,
+    'KeyG':0x0A,'KeyH':0x0B,'KeyI':0x0C,'KeyJ':0x0D,'KeyK':0x0E,'KeyL':0x0F,
+    'KeyM':0x10,'KeyN':0x11,'KeyO':0x12,'KeyP':0x13,'KeyQ':0x14,'KeyR':0x15,
+    'KeyS':0x16,'KeyT':0x17,'KeyU':0x18,'KeyV':0x19,'KeyW':0x1A,'KeyX':0x1B,
+    'KeyY':0x1C,'KeyZ':0x1D,
+    'Digit1':0x1E,'Digit2':0x1F,'Digit3':0x20,'Digit4':0x21,'Digit5':0x22,
+    'Digit6':0x23,'Digit7':0x24,'Digit8':0x25,'Digit9':0x26,'Digit0':0x27,
+    'Enter':0x28,'Escape':0x29,'Backspace':0x2A,'Tab':0x2B,'Space':0x2C,
+    'Minus':0x2D,'Equal':0x2E,'BracketLeft':0x2F,'BracketRight':0x30,
+    'Backslash':0x31,'IntlHash':0x32,'Semicolon':0x33,'Quote':0x34,
+    'Backquote':0x35,'Comma':0x36,'Period':0x37,'Slash':0x38,
+    'CapsLock':0x39,
+    'F1':0x3A,'F2':0x3B,'F3':0x3C,'F4':0x3D,'F5':0x3E,'F6':0x3F,
+    'F7':0x40,'F8':0x41,'F9':0x42,'F10':0x43,'F11':0x44,'F12':0x45,
+    'PrintScreen':0x46,'ScrollLock':0x47,'Pause':0x48,
+    'Insert':0x49,'Home':0x4A,'PageUp':0x4B,'Delete':0x4C,'End':0x4D,'PageDown':0x4E,
+    'ArrowRight':0x4F,'ArrowLeft':0x50,'ArrowDown':0x51,'ArrowUp':0x52,
+    'NumLock':0x53,'NumpadDivide':0x54,'NumpadMultiply':0x55,'NumpadSubtract':0x56,
+    'NumpadAdd':0x57,'NumpadEnter':0x58,
+    'Numpad1':0x59,'Numpad2':0x5A,'Numpad3':0x5B,'Numpad4':0x5C,'Numpad5':0x5D,
+    'Numpad6':0x5E,'Numpad7':0x5F,'Numpad8':0x60,'Numpad9':0x61,'Numpad0':0x62,
+    'NumpadDecimal':0x63,
+    'IntlBackslash':0x64,'ContextMenu':0x65,
+    'IntlRo':0x87,'KanaMode':0x88,'IntlYen':0x89,'Convert':0x8A,'NonConvert':0x8B,
+    'ControlLeft':0xE0,'ShiftLeft':0xE1,'AltLeft':0xE2,'MetaLeft':0xE3,
+    'ControlRight':0xE4,'ShiftRight':0xE5,'AltRight':0xE6,'MetaRight':0xE7,
+};
+
+function highlightKeyByHid(hid) {
+    keyboard.querySelectorAll('.key').forEach(k => k.classList.remove('active-press'));
+    if (hid == null) return;
+    keyboard.querySelectorAll(`.key[data-hid="${hid}"]`).forEach(k => {
+        k.classList.add('active-press');
+    });
+}
+
+document.addEventListener('keydown', function (e) {
+    /* Don't steal input from the search box on the landing page, etc. */
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    var hid = JS_KEY_TO_HID[e.code];
+    if (hid !== undefined) {
+        e.preventDefault();
+        highlightKeyByHid(hid);
+        handleKeyHover(hid, KEY_DATA[hid] ? KEY_DATA[hid].name : e.code);
+    }
+});
+
+document.addEventListener('keyup', function (e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    var hid = JS_KEY_TO_HID[e.code];
+    if (hid !== undefined) {
+        highlightKeyByHid(null);
+        handleKeyLeave();
+    }
+});
 
 // ============================================
 // Event Listeners
@@ -863,7 +927,10 @@ function initViewTabs() {
         tab.addEventListener('click', () => {
             const view = tab.dataset.view;
 
-            viewTabs.forEach(t => t.classList.toggle('active', t === tab));
+            viewTabs.forEach(t => {
+                t.classList.toggle('active', t === tab);
+                t.setAttribute('aria-selected', t === tab);
+            });
 
             if (view === 'keyboard') {
                 keyboardView.style.display = '';

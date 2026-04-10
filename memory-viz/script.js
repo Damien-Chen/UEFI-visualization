@@ -14,6 +14,13 @@ document.addEventListener('DOMContentLoaded', function() {
     initRuntimeHandoff();
     initCodeLinking();
     initExportToolbar();
+
+    /* keyboard navigation for step engines */
+    document.addEventListener('keydown', function (e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.key === 'ArrowLeft')  { changeAllocStep(-1); changeFreeStep(-1); changePoolStep(-1); }
+        if (e.key === 'ArrowRight') { changeAllocStep(1);  changeFreeStep(1);  changePoolStep(1);  }
+    });
 });
 
 // Navigation

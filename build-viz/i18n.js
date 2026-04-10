@@ -541,7 +541,7 @@ function updatePageTranslations() {
 
 function setLanguage(lang) {
     currentLang = translations[lang] ? lang : 'en';
-    localStorage.setItem('uefi-build-viz-lang', currentLang);
+    localStorage.setItem('uefi-viz-lang', currentLang);
 
     document.querySelectorAll('.lang-btn').forEach((btn) => {
         btn.classList.toggle('active', btn.dataset.lang === currentLang);
@@ -559,7 +559,7 @@ function setLanguage(lang) {
 }
 
 function initI18n() {
-    const saved = localStorage.getItem('uefi-build-viz-lang') || 'zh-TW';
+    const saved = localStorage.getItem('uefi-viz-lang') || 'zh-TW';
 
     document.querySelectorAll('.lang-btn').forEach((btn) => {
         btn.addEventListener('click', () => setLanguage(btn.dataset.lang));

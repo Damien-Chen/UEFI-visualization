@@ -7,7 +7,7 @@
     <title>USB HID & UEFI EDK2 Keyboard Code Viewer</title>
     <meta name="description"
         content="Interactive USB HID keyboard code viewer with UEFI EDK2 EFI key code mapping. Supports US ANSI, Japanese JIS, and European ISO layouts.">
-    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -20,23 +20,23 @@
         <header class="header">
             <a href="../index.html" class="back-link">← Back to Tools</a>
             <h1>USB HID & UEFI EDK2 Key Code Viewer</h1>
-            <p class="subtitle">Hover over any key to see its HID Usage ID and EFI Key code</p>
+            <p class="subtitle">Press any key or hover over the keyboard to see its HID Usage ID and EFI Key code</p>
         </header>
 
-        <div class="view-tabs">
-            <button class="view-tab active" data-view="keyboard">Keyboard Viewer</button>
-            <button class="view-tab" data-view="stack">USB Keyboard DXE Protocol Stack</button>
+        <div class="view-tabs" role="tablist" aria-label="View selector">
+            <button class="view-tab active" data-view="keyboard" role="tab" aria-selected="true" aria-controls="keyboardView">Keyboard Viewer</button>
+            <button class="view-tab" data-view="stack" role="tab" aria-selected="false" aria-controls="stackView">USB Keyboard DXE Protocol Stack</button>
         </div>
 
         <!-- ===== Keyboard Viewer ===== -->
         <div id="keyboardView">
-            <div class="layout-switcher">
-                <button class="layout-btn active" data-layout="ansi">US ANSI</button>
-                <button class="layout-btn" data-layout="iso">European ISO</button>
-                <button class="layout-btn" data-layout="jis">Japanese JIS</button>
+            <div class="layout-switcher" role="group" aria-label="Keyboard layout">
+                <button class="layout-btn active" data-layout="ansi" aria-pressed="true">US ANSI</button>
+                <button class="layout-btn" data-layout="iso" aria-pressed="false">European ISO</button>
+                <button class="layout-btn" data-layout="jis" aria-pressed="false">Japanese JIS</button>
             </div>
 
-            <div class="info-panel" id="infoPanel">
+            <div class="info-panel" id="infoPanel" aria-live="polite" aria-atomic="true">
                 <div class="info-header">
                     <span class="info-key-name" id="keyName">Hover over a key</span>
                 </div>
@@ -99,7 +99,8 @@
         </footer>
     </div>
 
-    <script src="index.js"></script>
+    <script src="script.js"></script>
+    <script src="../common/back-to-top.js" defer></script>
 </body>
 
 </html>

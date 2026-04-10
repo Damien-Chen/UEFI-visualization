@@ -521,7 +521,7 @@ const translations = {
 }
 };
 
-var currentLang = localStorage.getItem('pci-viz-lang') || 'en';
+var currentLang = localStorage.getItem('uefi-viz-lang') || 'en';
 
 function t(key) {
     var lang = translations[currentLang] || translations['en'];
@@ -541,7 +541,7 @@ function applyTranslations() {
 
 function setLang(lang) {
     currentLang = lang;
-    localStorage.setItem('pci-viz-lang', lang);
+    localStorage.setItem('uefi-viz-lang', lang);
 
     document.querySelectorAll('.lang-btn').forEach(function (btn) {
         btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);

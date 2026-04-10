@@ -315,7 +315,7 @@ function updatePageTranslations() {
 
 function setLanguage(lang) {
     currentLang = translations[lang] ? lang : 'en';
-    localStorage.setItem('uefi-pei-shadow-lang', currentLang);
+    localStorage.setItem('uefi-viz-lang', currentLang);
 
     document.querySelectorAll('.lang-btn').forEach(function (btn) {
         btn.classList.toggle('active', btn.getAttribute('data-lang') === currentLang);
@@ -330,7 +330,7 @@ function setLanguage(lang) {
 }
 
 function initI18n() {
-    var saved = localStorage.getItem('uefi-pei-shadow-lang') || 'zh-TW';
+    var saved = localStorage.getItem('uefi-viz-lang') || 'zh-TW';
     setLanguage(saved);
 
     document.querySelectorAll('.lang-btn').forEach(function (btn) {

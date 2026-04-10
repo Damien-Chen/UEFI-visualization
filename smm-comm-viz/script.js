@@ -486,6 +486,13 @@ document.addEventListener('DOMContentLoaded', function() {
         renderFlowStep(0);
     });
 
+    /* keyboard navigation for step engine */
+    document.addEventListener('keydown', function (e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.key === 'ArrowLeft'  && currentFlowStep > 0)              { currentFlowStep--; renderFlowStep(currentFlowStep); }
+        if (e.key === 'ArrowRight' && currentFlowStep < TOTAL_STEPS - 1) { currentFlowStep++; renderFlowStep(currentFlowStep); }
+    });
+
     // scroll spy
     setupScrollSpy();
 

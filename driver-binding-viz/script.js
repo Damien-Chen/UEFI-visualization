@@ -1172,6 +1172,19 @@ document.addEventListener('DOMContentLoaded', function() {
         disStep = 0; updateDisStep();
     });
 
+    /* keyboard navigation for step engines */
+    document.addEventListener('keydown', function (e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.key === 'ArrowLeft') {
+            if (connStep > 0) { connStep--; updateConnStep(); }
+            if (disStep > 0)  { disStep--;  updateDisStep();  }
+        }
+        if (e.key === 'ArrowRight') {
+            if (connStep < CONN_STEPS.length - 1) { connStep++; updateConnStep(); }
+            if (disStep < DIS_STEPS.length - 1)   { disStep++;  updateDisStep();  }
+        }
+    });
+
     /* scenario */
     renderScenarioDiagram();
 

@@ -436,7 +436,7 @@ const translations = {
 /* ------------------------------------------------------------------ */
 /*  i18n engine (same pattern as other viz tools)                      */
 /* ------------------------------------------------------------------ */
-let currentLang = localStorage.getItem('smm-comm-viz-lang') || 'zh-TW';
+let currentLang = localStorage.getItem('uefi-viz-lang') || 'zh-TW';
 
 function t(key) {
     var lang = translations[currentLang] || translations['en'];
@@ -456,7 +456,7 @@ function applyTranslations() {
 
 function setLang(lang) {
     currentLang = lang;
-    localStorage.setItem('smm-comm-viz-lang', lang);
+    localStorage.setItem('uefi-viz-lang', lang);
 
     document.querySelectorAll('.lang-btn').forEach(function (btn) {
         btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);

@@ -793,6 +793,13 @@ document.addEventListener('DOMContentLoaded', function() {
         renderEnumStep(0);
     });
 
+    /* keyboard navigation for step engine */
+    document.addEventListener('keydown', function (e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.key === 'ArrowLeft'  && currentEnumStep > 0)                  { currentEnumStep--; renderEnumStep(currentEnumStep); }
+        if (e.key === 'ArrowRight' && currentEnumStep < ENUM_TOTAL_STEPS - 1) { currentEnumStep++; renderEnumStep(currentEnumStep); }
+    });
+
     // config space toggles
     document.querySelectorAll('.config-toggle-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
