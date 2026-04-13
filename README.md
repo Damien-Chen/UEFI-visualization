@@ -65,6 +65,31 @@ Interactive visualization of the UEFI EDK2 PCI subsystem covering both x86_64 an
 
 Supports both English and Traditional Chinese (繁體中文).
 
+### 7. Driver Binding Mechanism Visualizer
+Interactive step-by-step visualization of the UEFI EDK2 Driver Binding Protocol lifecycle:
+- **Overview**: What Driver Binding Protocol is and the three core functions (Supported/Start/Stop)
+- **Data Structures**: IHANDLE, PROTOCOL_INTERFACE, PROTOCOL_ENTRY internals
+- **ConnectController**: 7-step interactive walkthrough from initial state to complete binding
+- **DisconnectController**: 6-step teardown flow with recursive child handle cleanup
+- **Real Scenario**: Full PCI device binding chain (Host Bridge → PCI Bus → NVMe → Partition)
+- **Code Analysis**: CoreConnectController, CoreInstallProtocolInterface, Driver Binding example
+
+Supports both English and Traditional Chinese (繁體中文).
+
+### 8. Protocol Services Visualizer
+Interactive visualization of the four core UEFI EDK2 Protocol access functions:
+- **Overview**: What Protocol Services are and why four different functions exist
+- **Data Structures**: OPEN_PROTOCOL_DATA tracking chain, PROTOCOL_INTERFACE.OpenList
+- **OpenProtocol**: 8-step interactive walkthrough covering all 6 attributes (BY_HANDLE_PROTOCOL, GET_PROTOCOL, TEST_PROTOCOL, BY_DRIVER, EXCLUSIVE, BY_CHILD_CONTROLLER)
+- **Attribute Comparison**: Side-by-side table of all 6 attributes with tracking, exclusivity, and use cases
+- **HandleProtocol**: Legacy wrapper explanation and why it's not recommended for drivers
+- **LocateProtocol**: 4-step walkthrough showing gProtocolDatabase → PROTOCOL_ENTRY → first PROTOCOL_INTERFACE
+- **LocateHandleBuffer**: 5-step walkthrough showing two-pass sizing/filling pattern
+- **Common Patterns**: Supported() check, Start() binding, singleton lookup, device enumeration, bus child patterns
+- **Code Analysis**: CoreOpenProtocol, CoreLocateProtocol, CoreLocateHandleBuffer source walkthrough
+
+Supports both English and Traditional Chinese (繁體中文).
+
 ## Deployment
 
 This project is configured for automatic deployment to GitHub Pages.
@@ -119,6 +144,16 @@ uefi-dev-tools/
 │   ├── script.js
 │   └── i18n.js
 ├── pci-viz/                # PCI Subsystem Visualizer
+│   ├── index.html
+│   ├── styles.css
+│   ├── script.js
+│   └── i18n.js
+├── driver-binding-viz/     # Driver Binding Mechanism Visualizer
+│   ├── index.html
+│   ├── styles.css
+│   ├── script.js
+│   └── i18n.js
+├── protocol-srv-viz/       # Protocol Services Visualizer
 │   ├── index.html
 │   ├── styles.css
 │   ├── script.js

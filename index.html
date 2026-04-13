@@ -209,6 +209,16 @@
             color: #c4b5fd;
         }
 
+        /* 8th card icon gradient */
+        .tool-card:nth-child(8) .tool-icon {
+            background: linear-gradient(135deg, #38bdf8 0%, #14b8a6 100%);
+        }
+
+        .tool-card:nth-child(8) .tag {
+            background: rgba(56, 189, 248, 0.12);
+            color: #7dd3fc;
+        }
+
         /* Search / Filter */
         .search-bar {
             display: flex;
@@ -465,6 +475,28 @@
                     <span class="tag">PCI Enumeration</span>
                     <span class="tag">PCI IO Protocol</span>
                     <span class="tag">x86 vs ARM</span>
+                </div>
+                <div class="nav-hint">
+                    <span>Open Tool</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </div>
+            </a>
+
+            <a href="protocol-srv-viz/index.html" class="tool-card" data-category="protocols">
+                <div class="tool-icon">&#x1F50D;</div>
+                <h2 class="tool-title">Protocol Services Visualizer</h2>
+                <p class="tool-description">
+                    Interactive visualization of UEFI EDK2 Protocol Services: OpenProtocol, HandleProtocol,
+                    LocateProtocol, and LocateHandleBuffer — internal OPEN_PROTOCOL_DATA tracking,
+                    attribute conflict resolution, and the Handle Database query mechanism.
+                </p>
+                <div class="tool-tags">
+                    <span class="tag">OpenProtocol</span>
+                    <span class="tag">HandleProtocol</span>
+                    <span class="tag">LocateProtocol</span>
+                    <span class="tag">OPEN_PROTOCOL_DATA</span>
                 </div>
                 <div class="nav-hint">
                     <span>Open Tool</span>

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UEFI Protocol Services 視覺化</title>
+    <meta name="description" content="Interactive visualization of UEFI EDK2 Protocol Services: OpenProtocol, HandleProtocol, LocateProtocol, LocateHandleBuffer — internal data structures, step-by-step flows, and attribute comparison.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
+</head>
+<body>
+    <div class="bg-orb orb-a"></div>
+    <div class="bg-orb orb-b"></div>
+
+    <nav class="top-nav">
+        <div class="brand">
+            <a href="../index.html" class="back-link" data-i18n="nav.back">&larr; Back to Tools</a>
+            <span data-i18n="page.title">UEFI Protocol Services Visualizer</span>
+        </div>
+        <ul class="nav-links">
+            <li><a class="nav-link active" href="#overview"    data-i18n="nav.overview">Overview</a></li>
+            <li><a class="nav-link"        href="#structs"     data-i18n="nav.structs">Data Structures</a></li>
+            <li><a class="nav-link"        href="#open"        data-i18n="nav.open">OpenProtocol</a></li>
+            <li><a class="nav-link"        href="#attributes"  data-i18n="nav.attributes">Attributes</a></li>
+            <li><a class="nav-link"        href="#handlep"     data-i18n="nav.handle">HandleProtocol</a></li>
+            <li><a class="nav-link"        href="#locate"      data-i18n="nav.locate">LocateProtocol</a></li>
+            <li><a class="nav-link"        href="#locatebuf"   data-i18n="nav.locatebuf">LocateHandleBuffer</a></li>
+            <li><a class="nav-link"        href="#patterns"    data-i18n="nav.patterns">Patterns</a></li>
+            <li><a class="nav-link"        href="#code"        data-i18n="nav.code">Code</a></li>
+            <li><a class="nav-link"        href="#references"  data-i18n="nav.references">References</a></li>
+        </ul>
+        <div class="lang-switcher">
+            <button class="lang-btn" data-lang="zh-TW" title="繁體中文">中文</button>
+            <button class="lang-btn" data-lang="en"    title="English">EN</button>
+        </div>
+    </nav>
+
+    <main class="page">
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!--  Section 1: Overview / Hero                                -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <header id="overview" class="section hero">
+            <p class="eyebrow" data-i18n="nav.overview">Overview</p>
+            <h1 data-i18n="overview.title">UEFI Protocol Services 概述</h1>
+            <p class="hero-desc" data-i18n="overview.subtitle">理解 EDK2 中如何存取和查詢 Handle Database 上的 Protocol 介面</p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-icon">🔍</div>
+                    <h3 data-i18n="overview.what.title">什麼是 Protocol Services？</h3>
+                    <p data-i18n="overview.what.desc"></p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">❓</div>
+                    <h3 data-i18n="overview.why.title">為什麼有 4 個不同的函式？</h3>
+                    <p data-i18n="overview.why.desc"></p>
+                </div>
+            </div>
+
+            <div style="margin-top: 32px;">
+                <h2 style="font-family: var(--head); font-size:1.1rem; font-weight:600; color:var(--text); text-align:center; margin-bottom:20px;">Protocol Services API</h2>
+                <div class="fn-grid">
+                    <div class="fn-card fn-open">
+                        <h3 data-i18n="overview.open.title">OpenProtocol</h3>
+                        <p data-i18n="overview.open.desc"></p>
+                    </div>
+                    <div class="fn-card fn-handlep">
+                        <h3 data-i18n="overview.handle.title">HandleProtocol</h3>
+                        <p data-i18n="overview.handle.desc"></p>
+                    </div>
+                    <div class="fn-card fn-locate">
+                        <h3 data-i18n="overview.locate.title">LocateProtocol</h3>
+                        <p data-i18n="overview.locate.desc"></p>
+                    </div>
+                    <div class="fn-card fn-locatebuf">
+                        <h3 data-i18n="overview.locatebuf.title">LocateHandleBuffer</h3>
+                        <p data-i18n="overview.locatebuf.desc"></p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!--  Section 2: Data Structures                                -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <section id="structs" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="structs.title">核心資料結構</h2>
+                <p data-i18n="structs.subtitle"></p>
+            </div>
+
+            <div class="struct-grid">
+                <!-- OPEN_PROTOCOL_DATA -->
+                <div class="struct-card struct-opd">
+                    <div class="struct-card-header">
+                        <span class="struct-name">OPEN_PROTOCOL_DATA</span>
+                        <span class="struct-sig">'op'</span>
+                    </div>
+                    <div class="struct-desc" data-i18n="structs.opd.desc"></div>
+                    <div class="struct-fields">
+                        <div class="struct-field">
+                            <span class="field-name">Signature</span>
+                            <span class="field-desc" data-i18n="structs.opd.sig"></span>
+                        </div>
+                        <div class="struct-field">
+                            <span class="field-name">Link</span>
+                            <span class="field-desc" data-i18n="structs.opd.link"></span>
+                        </div>
+                        <div class="struct-field">
+                            <span class="field-name">AgentHandle</span>
+                            <span class="field-desc" data-i18n="structs.opd.agent"></span>
+                        </div>
+                        <div class="struct-field">
+                            <span class="field-name">ControllerHandle</span>
+                            <span class="field-desc" data-i18n="structs.opd.ctrl"></span>
+                        </div>
+                        <div class="struct-field">
+                            <span class="field-name">Attributes</span>
+                            <span class="field-desc" data-i18n="structs.opd.attr"></span>
+                        </div>
+                        <div class="struct-field">
+                            <span class="field-name">OpenCount</span>
+                            <span class="field-desc" data-i18n="structs.opd.cnt"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROTOCOL_INTERFACE (focused on OpenList) -->
+                <div class="struct-card struct-pi">
+                    <div class="struct-card-header">
+                        <span class="struct-name">PROTOCOL_INTERFACE</span>
+                        <span class="struct-sig">'pi'</span>
+                    </div>
+                    <div class="struct-desc" data-i18n="structs.pi.desc"></div>
+                    <div class="struct-fields">
+                        <div class="struct-field">
+                            <span class="field-name">OpenList</span>
+                            <span class="field-desc" data-i18n="structs.pi.openlist"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Relationship diagram -->
+            <div class="diagram-wrap" style="margin-top:40px;">
+                <div class="diagram-title" data-i18n="structs.diagram.title">OpenProtocol 追蹤鏈</div>
+                <div class="diagram-desc" data-i18n="structs.diagram.desc"></div>
+                <div id="structs-diagram-container"></div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!--  Section 3: OpenProtocol step-by-step                      -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <section id="open" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="open.title">OpenProtocol 逐步流程</h2>
+                <p data-i18n="open.subtitle"></p>
+            </div>
+
+            <div class="step-controls">
+                <button id="open-prev" class="step-btn" disabled data-i18n="btn.prev">&larr; 上一步</button>
+                <span id="open-indicator" class="step-indicator">1 / 8</span>
+                <button id="open-next" class="step-btn" data-i18n="btn.next">下一步 &rarr;</button>
+                <button id="open-reset" class="step-btn reset-btn" data-i18n="btn.reset">重置</button>
+            </div>
+
+            <div id="open-description" class="step-description">
+                <!-- filled by JS -->
+            </div>
+
+            <div class="svg-container">
+                <svg id="open-svg" viewBox="0 0 960 440" xmlns="http://www.w3.org/2000/svg">
+                    <!-- filled by JS -->
+                </svg>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!--  Section 4: Attribute comparison table                     -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <section id="attributes" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="attr.title">OpenProtocol 六種屬性完整比較</h2>
+                <p data-i18n="attr.subtitle"></p>
+            </div>
+
+            <div class="attr-table-wrap">
+                <table class="attr-table" id="attr-table">
+                    <!-- filled by JS -->
+                </table>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!--  Section 5: HandleProtocol                                 -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <section id="handlep" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="handlep.title">HandleProtocol — 簡化包裝</h2>
+                <p data-i18n="handlep.subtitle"></p>
+            </div>
+
+            <p style="font-size:0.95rem; color:var(--muted); line-height:1.7; margin-bottom:20px;" data-i18n="handlep.desc"></p>
+
+            <div class="equiv-box">
+                <h3 data-i18n="handlep.equiv">等效呼叫</h3>
+                <p data-i18n="handlep.equiv.desc"></p>
+                <code>// HandleProtocol(Handle, Protocol, &Interface)
+// is internally equivalent to:
+OpenProtocol(
+  Handle,
+  Protocol,
+  &Interface,
+  gDxeCoreImageHandle,  // AgentHandle
+  NULL,                 // ControllerHandle
+  EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL
+);</code>
+            </div>
+
+            <div class="warn-box">
+                <h3 data-i18n="handlep.warn.title">為什麼不建議在驅動程式中使用？</h3>
+                <p data-i18n="handlep.warn.desc"></p>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!--  Section 6: LocateProtocol step-by-step                    -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <section id="locate" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="locp.title">LocateProtocol 逐步流程</h2>
+                <p data-i18n="locp.subtitle"></p>
+            </div>
+
+            <div class="step-controls">
+                <button id="loc-prev" class="step-btn" disabled data-i18n="btn.prev">&larr; 上一步</button>
+                <span id="loc-indicator" class="step-indicator">1 / 4</span>
+                <button id="loc-next" class="step-btn" data-i18n="btn.next">下一步 &rarr;</button>
+                <button id="loc-reset" class="step-btn reset-btn" data-i18n="btn.reset">重置</button>
+            </div>
+
+            <div id="loc-description" class="step-description locate-step">
+                <!-- filled by JS -->
+            </div>
+
+            <div class="svg-container">
+                <svg id="loc-svg" viewBox="0 0 960 380" xmlns="http://www.w3.org/2000/svg">
+                    <!-- filled by JS -->
+                </svg>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!--  Section 7: LocateHandleBuffer step-by-step                -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <section id="locatebuf" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="locbuf.title">LocateHandleBuffer 逐步流程</h2>
+                <p data-i18n="locbuf.subtitle"></p>
+            </div>
+
+            <div class="step-controls">
+                <button id="buf-prev" class="step-btn" disabled data-i18n="btn.prev">&larr; 上一步</button>
+                <span id="buf-indicator" class="step-indicator">1 / 5</span>
+                <button id="buf-next" class="step-btn" data-i18n="btn.next">下一步 &rarr;</button>
+                <button id="buf-reset" class="step-btn reset-btn" data-i18n="btn.reset">重置</button>
+            </div>
+
+            <div id="buf-description" class="step-description locbuf-step">
+                <!-- filled by JS -->
+            </div>
+
+            <div class="svg-container">
+                <svg id="buf-svg" viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg">
+                    <!-- filled by JS -->
+                </svg>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!--  Section 8: Common Patterns                                -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <section id="patterns" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="patterns.title">常見使用模式</h2>
+                <p data-i18n="patterns.subtitle"></p>
+            </div>
+
+            <div class="pattern-grid">
+                <div class="pattern-card">
+                    <h4 data-i18n="patterns.supported.title">Supported() 檢查模式</h4>
+                    <p data-i18n="patterns.supported.desc"></p>
+                </div>
+                <div class="pattern-card">
+                    <h4 data-i18n="patterns.start.title">Start() 綁定模式</h4>
+                    <p data-i18n="patterns.start.desc"></p>
+                </div>
+                <div class="pattern-card">
+                    <h4 data-i18n="patterns.singleton.title">單例查找模式</h4>
+                    <p data-i18n="patterns.singleton.desc"></p>
+                </div>
+                <div class="pattern-card">
+                    <h4 data-i18n="patterns.enumerate.title">設備列舉模式</h4>
+                    <p data-i18n="patterns.enumerate.desc"></p>
+                </div>
+                <div class="pattern-card">
+                    <h4 data-i18n="patterns.buschild.title">匯流排子句柄模式</h4>
+                    <p data-i18n="patterns.buschild.desc"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!--  Section 9: Code walkthrough                               -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <section id="code" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="code.title">關鍵程式碼解析</h2>
+                <p data-i18n="code.subtitle"></p>
+            </div>
+
+            <div class="code-tabs">
+                <button class="code-tab active" data-tab="open"    data-i18n="code.open.title">CoreOpenProtocol()</button>
+                <button class="code-tab"        data-tab="locate"  data-i18n="code.locate.title">CoreLocateProtocol()</button>
+                <button class="code-tab"        data-tab="locbuf"  data-i18n="code.locbuf.title">CoreLocateHandleBuffer()</button>
+            </div>
+
+            <div class="code-pane active" id="pane-open">
+                <div class="code-file-label" data-i18n="code.open.file">MdeModulePkg/Core/Dxe/Hand/Handle.c</div>
+                <div class="code-block"><pre id="code-open-pre"></pre></div>
+            </div>
+
+            <div class="code-pane" id="pane-locate">
+                <div class="code-file-label" data-i18n="code.locate.file">MdeModulePkg/Core/Dxe/Hand/Locate.c</div>
+                <div class="code-block"><pre id="code-locate-pre"></pre></div>
+            </div>
+
+            <div class="code-pane" id="pane-locbuf">
+                <div class="code-file-label" data-i18n="code.locbuf.file">MdeModulePkg/Core/Dxe/Hand/Locate.c</div>
+                <div class="code-block"><pre id="code-locbuf-pre"></pre></div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!--  Section 10: References                                    -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <section id="references" class="section panel">
+            <div class="section-head">
+                <h2 data-i18n="references.title">參考資源</h2>
+                <p data-i18n="references.desc"></p>
+            </div>
+
+            <ul class="refs-list">
+                <li>
+                    <a href="https://uefi.org/specifications" target="_blank" rel="noopener noreferrer" data-i18n="ref.uefi.title">UEFI Specification 2.10 — Section 7.3</a>
+                    <p data-i18n="ref.uefi.desc"></p>
+                </li>
+                <li>
+                    <a href="https://github.com/tianocore/edk2/blob/master/MdeModulePkg/Core/Dxe/Hand/Handle.c" target="_blank" rel="noopener noreferrer" data-i18n="ref.edk2.handle">EDK2 Source: Handle.c</a>
+                    <p data-i18n="ref.edk2.handle.desc"></p>
+                </li>
+                <li>
+                    <a href="https://github.com/tianocore/edk2/blob/master/MdeModulePkg/Core/Dxe/Hand/Locate.c" target="_blank" rel="noopener noreferrer" data-i18n="ref.edk2.locate">EDK2 Source: Locate.c</a>
+                    <p data-i18n="ref.edk2.locate.desc"></p>
+                </li>
+                <li>
+                    <a href="https://github.com/tianocore/edk2/blob/master/MdeModulePkg/Core/Dxe/DxeMain.h" target="_blank" rel="noopener noreferrer" data-i18n="ref.edk2.main">EDK2 Source: DxeMain.h</a>
+                    <p data-i18n="ref.edk2.main.desc"></p>
+                </li>
+                <li>
+                    <a href="https://uefi.org/specifications" target="_blank" rel="noopener noreferrer" data-i18n="ref.pi.title">UEFI PI Specification — Volume 2</a>
+                    <p data-i18n="ref.pi.desc"></p>
+                </li>
+            </ul>
+        </section>
+
+    </main>
+
+    <footer class="footer" data-i18n="footer.text">UEFI Protocol Services Visualizer | Educational Purpose</footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
